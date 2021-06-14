@@ -1,131 +1,80 @@
 library(rgdal)
 
-gridSenegal <- c(-17.54319,-11.34247,12.30786,16.69207,744,527)
-holesSenegal <- which(is.na(grid_senComPop))
+### Required data:
+###   <individus.csv> and <habitat.csv> are extracts from the 2013 Census, see data section of the general documentation
+###   <Senegal_Communes_552.shp> is a shapefile of Senegal at Commune level (522 entities according to the post DEC 2013 definitions)
+###   <popelec.csv> contains population density and electrification rates at Commune level estimated by Georges Vivien Houngbonon (ghoungbonon@ifc.org)
+###   <SITE_ARR_LONLAT.csv> contains coordinates of all antenna sites in Senegal. Request access from Orange/Sonatel
+
+
+
+
+
+gridSenegal <- c(-17.54319,-11.34247,12.30786,16.69207,744,527) # coordinates of a bounding box around Senegal
+holesSenegal <- which(is.na(grid_senComPop)) # reference of empty spaces (e.g. Sea, different Country)
+
+
+
 
 
 #######################################################
 ##### Spatial data in Voronoi cells around towers #####
 #######################################################
 
+
 #####-------------
 ##### Census data 
 #####-------------
 
 
-individus <- read.csv("/Users/Hadrien/Desktop/Data/NewOrange/individus.csv",header = T, sep=";")
-habitat <- read.csv("/Users/Hadrien/Desktop/Data/NewOrange/habitat.csv",header = T, sep=";")
+individus <- read.csv("/data/individus.csv",header = T, sep=";")
+habitat <- read.csv("/data/habitat.csv",header = T, sep=";")
+popelec <- read.csv("/data/popelec.csv")
 
 
 #####----------------------------------------
 ##### Data in Shapefiles (dens, dens2, elec) 
 #####----------------------------------------
 
-senCommune3 <- readOGR("Limite_Commune_Senegal.shp")
 
-senCommune3@data$rand <- sample(1:552)
+senCommune <- readOGR("Senegal_Communes_552.shp")
+
+# visualisation
+senCommune@data$rand <- sample(1:552) 
 
 r <- raster(ncol=744, nrow=527)
-extent(r) <- extent(senCommune3)
+extent(r) <- extent(senCommune)
 
-senComPop2 <- rasterize(senCommune3, r, 'rand')
-extent(senComPop2) <- extent(senCommune)
+senComRand <- rasterize(senCommune, r, 'rand')
+extent(senComRand) <- extent(senCommune)
 
-plot(senComPop2)
+plot(senComRand)
 plot(senCommune,add=T)
-text(senCommune3@data$LONGITUDE,senCommune3@data$LATITUDE,senCommune3@data$COD_ENTITE)
+text(senCommune@data$LONGITUDE,senCommune@data$LATITUDE,senCommune@data$COD_ENTITE)
 
-
-plot(senComPop2,xlim=c(-14.5,-11.34),ylim=c(12.3,14.5))
-plot(senCommune,add=T)
-text(senCommune3@data$LONGITUDE,senCommune3@data$LATITUDE,senCommune3@data$COD_ENTITE)
-
-plot(senComPop2,xlim=c(-14.5,-1134),ylim=c(14.5,16.70))
-plot(senCommune,add=T)
-text(senCommune3@data$LONGITUDE,senCommune3@data$LATITUDE,senCommune3@data$COD_ENTITE)
-
-plot(senComPop2,xlim=c(-17.55,-14.5),ylim=c(12.3,14.5))
-plot(senCommune,add=T)
-text(senCommune3@data$LONGITUDE,senCommune3@data$LATITUDE,senCommune3@data$COD_ENTITE)
-
-plot(senComPop2,xlim=c(-17.55,-14.5),ylim=c(14.5,16.70))
-plot(senCommune,add=T)
-text(senCommune3@data$LONGITUDE,senCommune3@data$LATITUDE,senCommune3@data$COD_ENTITE)
-
-
-
-cents <- coordinates(senCommuneProper)
-
-cents[129,]
-cover
-
-dat2 <- data.frame(long = cents[129,1], lat = cents[129,2], name = senCommuneProper@data$COD_ENTITE[129])
-coordinates(dat2) <- ~ long + lat
-proj4string(dat2) <- proj4string(senCommuneProper)
-
-test <- over(dat2,senCommune)
-
-
-
-
-
-dat <- data.frame(long = cents[,1], lat = cents[,2], name = senCommuneProper@data$COD_ENTITE)
-coordinates(dat) <- ~ long + lat
-proj4string(dat) <- proj4string(senCommuneProper)
-
-test <- over(dat,senCommune)
-
-proj4string(senCommune) <- proj4string(senCommuneProper)
-proj4string(dat)
-
-View(test)
-View(senCommune@data)
-
-length(unique(test$CC_45))
-length(unique(test$COD_ENTITE))
-
-
-length(unique(senCommune3@data$COD_ENTITE))
-
-
-lookUpTable <- data.frame(com552 = senCommuneProper@data$COD_ENTITE, com433 = test$CC_4)
-
-write.csv(lookUpTable,"lookUpTable.csv")
-
-senCommune3@data$CC_45 <- test$CC_45
-senCommune3@data$check <- senCommune3@data$COD_ENTITE
-
-
-popelec <- read.csv("popelec.csv")
+# standardisation of Commune codes in popelec
 for(i in 1:552){
   if(nchar(popelec$cacr[i]) < 8){
     popelec$cacr[i] <- paste("0",popelec$cacr[i],sep="")
   }
 }
 
-senCommune3@data$id <- 1:552
-senCommune3@data <- merge(senCommune3@data,popelec,by.x="COD_ENTITE",by.y="cacr",sort=F)
+colnames(senCommune@data)[which(colnames(senCommune@data) == "pop"] <- "popOld"
+
+senCommune@data$id <- 1:552
+senCommune@data <- merge(senCommune@data,popelec,by.x="COD_ENTITE",by.y="cacr",sort=F)
+
+r <- raster(ncol=744, nrow=527)
+extent(r) <- extent(senCommune)
+senComPop <- rasterize(senCommune, r, 'density')
+
+grid_senComPop <- as.matrix(senComPop)
+grid_senComPop <- grid_senComPop[nrow(grid_senComPop):1,]
+# grid_senComPop[which(is.na(grid_senComPop))] <- 0
 
 
-
-senCommune@data <- merge(senCommune@data,temp,by.x="CC_45",by.y="CC_45",sort=F,all.x=T)
-senCommune@data$pop[is.na(senCommune@data$pop)] <- senCommune@data$popsize[is.na(senCommune@data$pop)]
-senCommune@data$Density2 <- senCommune@data$pop/senCommune@data$gadm36__15
-  
-View(senCommune@data)
-  
-
-
-
-plot(senComPop2)
-
-senComPop2 <- rasterize(senCommune, r, 'Density2')
-
-grid_senComPop2 <- as.matrix(senComPop2)
-grid_senComPop2 <- grid_senComPop2[nrow(grid_senComPop2):1,]
-grid_senComPop2[which(is.na(grid_senComPop2))] <- 0
-grid_senComPop2[which(is.na(grid_senComPop))] <- NA
-
+                                
+                                
 vor_data$dens3 <- avg_voronoi_ref_NA(grid_senComPop2,ref2)[[2]]
 
 
@@ -178,8 +127,6 @@ cor(vor_data$texts,vor_data$dens3)^2
 cor(vor_data$calls,vor_data$dens3)^2
 cor(vor_data$length,vor_data$dens3)^2
 
-which(vor_data$texts == 0)
-which(vor_data$dens3 == 0)
 
 subset <- setdiff(1:1298,which(vor_data$texts == 0))
 subset <- setdiff(subset,which(vor_data$dens3 == 0))
@@ -205,14 +152,6 @@ extent(senComPop3) <- extent(senCommune)
 plot(senComPop3)
 
 
-sum(popelec$popsize)
-sum(senCommune@data$pop)
-sum(senCommune@data$popsize)
-
-sum(vor_data$dens*vor_data$cells)
-sum(vor_data$dens3*vor_data$cells)
-
-
 plot(senCommune3)
 
 plot(senComPop2)
@@ -227,15 +166,8 @@ plot(senComPop3,xlim=c(-15,-14),ylim=c(12.5,14))
 text(senCommune3@data$LONGITUDE,senCommune3@data$LATITUDE,senCommune3@data$COD_ENTITE)
 
 
-
-
 text(senCommune3@data$LONGITUDE[403],senCommune3@data$LATITUDE[403],senCommune3@data$COD_ENTITE[403])
 
-
-senCommune3@data$ident[403]
-senCommune3@data$COD_ENTITE[417]
-
-10220301
 
 cents <- coordinates(senCommune)
 
@@ -350,12 +282,12 @@ grid_Sptv_t_y[which(is.na(grid_senComPop))] <- NA
 #####---------------------------------------
 
 
-imported_raster <- raster("/Users/Hadrien/Desktop/Data/Nighttime_lights_visible_x_pct/F182013.v4c.avg_lights_x_pct.tif")
+imported_raster <- raster("/data/Nighttime_lights_visible_x_pct/F182013.v4c.avg_lights_x_pct.tif")
 subset <- crop(imported_raster,extent(senCommune))
 nightlightxpct <- as.matrix(subset)
 nightlightxpct <- nightlightxpct[nrow(nightlightxpct):1,]
 
-imported_raster2 <- raster("/Users/Hadrien/Desktop/Data/Nighttime_lights_visible/F182013.v4c_web.stable_lights.avg_vis.tif")
+imported_raster2 <- raster("/data/Nighttime_lights_visible/F182013.v4c_web.stable_lights.avg_vis.tif")
 subset2 <- crop(imported_raster2,extent(senCommune))
 nightlight <- as.matrix(subset2)
 nightlight <- nightlight[nrow(nightlight):1,]
