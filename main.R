@@ -1,101 +1,88 @@
+library(rgdal)
+
+
 ### Data required:
-###   <Senegal_Communes_552.shp> is a shapefile of Senegal at commune level (522 entities according to the post DEC 2013 definitions)
+###   <Senegal_Communes_552.shp> is a shapefile of Senegal at Commune level (522 entities according to the post DEC 2013 definitions)
+###   <comData.csv> data frame with population density and nighttime lights intensity at Commune level
+###   <vorData.csv> same information as <comData.csv> at Voronoi level around each of the active antenna sites (trimmed to 1298 from 1666 sites) and mobile phone activity
 
 
+# load data
 senCommune <- readOGR("Senegal_Communes_552.shp")
 popelec <- read.csv("popelec.csv")
+vor_data <- read.csv("vorData.csv")
+attach(vor_data)
 
+# standardisation of Commune codes
 for(i in 1:552){
   if(nchar(popelec$cacr[i]) == 7){
     popelec$cacr[i] <- paste("0",popelec$cacr[i],sep="")
   }
 }
 
+# data integrated to shp
 ref <- data.frame(cacr=senCommune@data$COD_ENTITE)
 test <- merge(ref,popelec,sort=F)
 senCommune@data$pop <- test$popsize
 senCommune@data$density <- senCommune@data$pop/senCommune@data$SUPERFICIE
 
+# visualisation
 r <- raster(ncol=744, nrow=527)
 extent(r) <- extent(senCommune)
 senComPop <- rasterize(senCommune,r,"density")
 
-plot(senComPop)
-plot(senCommune,add=T)
+plot(senComPop) # colour map by pop density
+plot(senCommune,add=T) # boundaries
 
-grid_senComPop <- as.matrix(senComPop)
-grid_senComPop <- grid_senComPop[nrow(grid_senComPop):1,]
-
-meltedgrid <- melt(grid_senComPopProper)
-ggplot(meltedgrid, aes(x = Var2, y = Var1, fill = value)) + geom_tile() + theme(legend.position="none",axis.title.y=element_blank(),axis.title.x=element_blank(),panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.background = element_blank(),axis.text.x = element_text(angle = 90, hjust = 1))+scale_fill_gradient2(low="orange",mid="white",high="steelblue4")
-
-vor_data$dens2 <- avg_voronoi_ref_NA(grid_senComPopProper,ref2)[[2]]
+# alternative
+# grid_senComPop <- as.matrix(senComPop)
+# grid_senComPop <- grid_senComPop[nrow(grid_senComPop):1,]
+# meltedgrid <- melt(grid_senComPop)
+# ggplot(meltedgrid, aes(x = Var2, y = Var1, fill = value)) + geom_tile() + theme(legend.position="none",axis.title.y=element_blank(),axis.title.x=element_blank(),panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.background = element_blank(),axis.text.x = element_text(angle = 90, hjust = 1))+scale_fill_gradient2(low="orange",mid="white",high="steelblue4")
 
 
-cor(vor_data$dens2,vor_data$night)^2
-cor(vor_data$dens2,vor_data$texts)^2
-cor(vor_data$dens2,vor_data$calls)^2
-cor(vor_data$dens2,vor_data$length)^2
-
-subset <- setdiff(1:1298,which(vor_data$night == 0))
-subset <- setdiff(subset,which(vor_data$dens == 0))
-subset <- setdiff(subset,which(vor_data$dens2 == 0))
-
-cor(log(vor_data$dens2[subset]),log(vor_data$night[subset]))^2
-cor(log(vor_data$dens2[subset]),log(vor_data$texts[subset]))^2
-cor(log(vor_data$dens2[subset]),log(vor_data$calls[subset]))^2
-cor(log(vor_data$dens2[subset]),log(vor_data$length[subset]))^2
 
 
-subsetC2 <- intersect(subset,which(vor_data$dens2 > 5000))
-subsetV2 <- intersect(subset,which(vor_data$dens2 <= 5000))
-
-cor(vor_data$dens2[subsetC2],vor_data$texts[subsetC2])^2
-cor(vor_data$dens2[subsetC2],vor_data$calls[subsetC2])^2
-cor(vor_data$dens2[subsetC2],vor_data$length[subsetC2])^2
-cor(vor_data$dens2[subsetC2],vor_data$night[subsetC2])^2
-
-cor(log(vor_data$dens2[subsetC2]),log(vor_data$night[subsetC2]))^2
-cor(log(vor_data$dens2[subsetC2]),log(vor_data$texts[subsetC2]))^2
-cor(log(vor_data$dens2[subsetC2]),log(vor_data$calls[subsetC2]))^2
-cor(log(vor_data$dens2[subsetC2]),log(vor_data$length[subsetC2]))^2
-
-cor(vor_data$dens2[subsetV2],vor_data$night[subsetV2])^2
-cor(vor_data$dens2[subsetV2],vor_data$texts[subsetV2])^2
-cor(vor_data$dens2[subsetV2],vor_data$calls[subsetV2])^2
-cor(vor_data$dens2[subsetV2],vor_data$length[subsetV2])^2
-
-cor(log(vor_data$dens2[subsetV2]),log(vor_data$night[subsetV2]))^2
-cor(log(vor_data$dens2[subsetV2]),log(vor_data$texts[subsetV2]))^2
-cor(log(vor_data$dens2[subsetV2]),log(vor_data$calls[subsetV2]))^2
-cor(log(vor_data$dens2[subsetV2]),log(vor_data$length[subsetV2]))^2
 
 
-cor(vor_data$night,vor_data$texts)^2
-cor(vor_data$night,vor_data$calls)^2
-cor(vor_data$night,vor_data$length)^2
-cor(vor_data$night[subsetC2],vor_data$texts[subsetC2])^2
-cor(vor_data$night[subsetC2],vor_data$calls[subsetC2])^2
-cor(vor_data$night[subsetC2],vor_data$length[subsetC2])^2
-cor(vor_data$night[subsetV2],vor_data$texts[subsetV2])^2
-cor(vor_data$night[subsetV2],vor_data$calls[subsetV2])^2
-cor(vor_data$night[subsetV2],vor_data$length[subsetV2])^2
+vor_data$dens2 <- avg_voronoi_ref_NA(grid_senComPop,ref2)[[2]]
+dens2 <- vor_data$dens2
 
-cor(log(vor_data$night[subset]),log(vor_data$texts[subset]))^2
-cor(log(vor_data$night[subset]),log(vor_data$calls[subset]))^2
-cor(log(vor_data$night[subset]),log(vor_data$length[subset]))^2
-cor(log(vor_data$night[subsetC2]),log(vor_data$texts[subsetC2]))^2
-cor(log(vor_data$night[subsetC2]),log(vor_data$calls[subsetC2]))^2
-cor(log(vor_data$night[subsetC2]),log(vor_data$length[subsetC2]))^2
-cor(log(vor_data$night[subsetV2]),log(vor_data$texts[subsetV2]))^2
-cor(log(vor_data$night[subsetV2]),log(vor_data$calls[subsetV2]))^2
-cor(log(vor_data$night[subsetV2]),log(vor_data$length[subsetV2]))^2
+subset <- setdiff(1:1298,which(night == 0))
+subset <- setdiff(subset,which(dens == 0))
+subset <- setdiff(subset,which(dens2 == 0))
+subsetC2 <- intersect(subset,which(vor_data$dens2 > 5000)) # outdated definition of cities (reduced to 1000 in later work)
+subsetV2 <- intersect(subset,which(vor_data$dens2 <= 5000)) # outdated definition of rural villages
 
+cor(dens2,night)^2
+cor(dens2,texts)^2
+cor(dens2,calls)^2
+cor(dens2,length)^2
+cor(log(dens2[subset]),log(night[subset]))^2
+cor(log(dens2[subset]),log(texts[subset]))^2
+cor(log(dens2[subset]),log(calls[subset]))^2
+cor(log(dens2[subset]),log(length[subset]))^2
+cor(dens2[subsetC2],texts[subsetC2])^2
+cor(dens2[subsetC2],calls[subsetC2])^2
+cor(dens2[subsetC2],length[subsetC2])^2
+cor(dens2[subsetC2],night[subsetC2])^2
+cor(dens2[subsetV2],night[subsetV2])^2
+cor(dens2[subsetV2],texts[subsetV2])^2
+cor(dens2[subsetV2],calls[subsetV2])^2
+cor(dens2[subsetV2],length[subsetV2])^2
+cor(night,texts)^2
+cor(night,calls)^2
+cor(night,length)^2
+cor(night[subsetC2],texts[subsetC2])^2
+cor(night[subsetC2],calls[subsetC2])^2
+cor(night[subsetC2],length[subsetC2])^2
+cor(night[subsetV2],texts[subsetV2])^2
+cor(night[subsetV2],calls[subsetV2])^2
+cor(night[subsetV2],length[subsetV2])^2
 
 rsqP(night,texts,dens2,subset)
 rsqP(night,texts,dens,subset)
 
-attach(vor_data)
 
 temp <- glm(night[subset] ~ log(texts[subset]) + log(dens[subset]),family = poisson(link = "log"),na.action = na.exclude)
 cor(night,exp(temp$coefficients[1])*texts^temp$coefficients[2]*dens^temp$coefficients[3])^2
@@ -157,26 +144,8 @@ cor(night,exp(temp$coefficients[1])*length^temp$coefficients[2]*dens2^temp$coeff
 cor(night[subsetV2],exp(temp$coefficients[1])*length[subsetV2]^temp$coefficients[2]*dens2[subsetV2]^temp$coefficients[3])^2
 
 
-length(subsetC2)
 
 
-rsq <- function(a,b,subset=1:length(a),l=1){
-  if(l==1){
-    return(cor(a[subset],b[subset])^2)
-  } else{
-    return(cor(log(a[subset]),log(b[subset]))^2)
-  }
-}
-
-rsqP <- function(a,b,c=NULL,subset=1:length(a)){
-  if(!is.null(c)){
-    temp <- glm(a[subset] ~ log(b[subset]) + log(c[subset]),family = poisson(link = "log"),na.action = na.exclude)
-    rsq(a,exp(temp$coefficients[1])*b^temp$coefficients[2]*c^temp$coefficients[3])
-  }else{
-    temp <- glm(a[subset] ~ log(b[subset]),family = poisson(link = "log"),na.action = na.exclude)
-    rsq(a,exp(temp$coefficients[1])*b^temp$coefficients[2])
-  }
-}
 
 
 
@@ -186,39 +155,8 @@ rsqP <- function(a,b,c=NULL,subset=1:length(a)){
 ##########################################
 
 
-write.dbf(senCommune@data,"Senegal_Communes_552.dbf")
-
-head(senCommuneTemp@data)
-
-senCommuneTemp@data$CODE433 <- lookUpTable[,2]
-
-View(senCommuneTemp@data)
-
-write.dbf(senCommuneTemp@data,"test4-2.dbf")
-
-senCommuneProper <- readOGR("test4.shp")
-plot(senCommuneProper)
-
-View(senCommuneProper@data)
-
-proj4string(senCommuneProper)
 
 
-test1 <- readOGR("Senegal_Communes_The_Definitive_Edition/Senegal_Communes_552.shp")
-test2 <- readOGR("Senegal_Communes_The_Definitive_Edition/Senegal_Communes_433.shp")
-
-proj4string(test2)
-extent(test2)
-
-
-
-diff <- (area(test1)/1000000-test1@data$SUPERFICIE)/test1@data$SUPERFICIE
-plot(1:552,diff)
-
-
-
-
-senCommune <- readOGR("test.shp")
 
 
 diff <- (area(senCommune)/1000000-senCommune@data$SUPERFICIE)/senCommune@data$SUPERFICIE
@@ -331,9 +269,6 @@ proj4string(dat) <- proj4string(senCommuneProper)
 
 test <- over(dat,senCommune)
 
-View(test)
-View(senCommune@data)
-
 length(unique(test$CC_45))
 length(unique(test$COD_ENTITE))
 
@@ -376,16 +311,7 @@ length(setdiff(unique(names),unique(lookUpTable$com433)))
 
 length(which(names != lookUpTable$com433))
 
-
 write.csv(lookUpTable,"lookUpTable.csv",row.names = F)
-
-552-433
-
-length(unique(names))
-
-
-View(senCommune@data)
-
 
 
 senCommune2 <- readOGR("Limite_Commune_Senegal.shp")
@@ -459,18 +385,9 @@ for(i in 1:length(temp)){
     }
 }
 
-length(unique(temp2))
 
 senCommune2@data$COD_ENTITE[which(!(senCommune2@data$diff < 50 & senCommune2@data$diff > -50))]
 
-
-
-686*515
-744*525
-
-2151*196889
-
-mean(senCommune2@data$density)
 
 senComPop2 <- rasterize(senCommune2, r, 'density')
 senComPop2 <- rasterize(senCommune2.subset, r, 'density')
@@ -546,14 +463,3 @@ cor(log(vor_data$dens3[subset]),log(vor_data$night[subset]))^2
 
 sum(vor_data$dens3*vor_data$cells)
 sum(vor_data$dens*vor_data$cells)
-
-View(senCommune2@data)
-
-
-
-
-
-
-
-
-
