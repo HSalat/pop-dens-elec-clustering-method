@@ -641,6 +641,59 @@ distMatCorNA <- function(df,n){
   return(1-m)
 }
 
+##############################
+##### Network Clustering #####
+##############################
+  
+
+clustFeat <- function(G,t,dist){
+  # G is the original graph.
+  # t is the edge threshold(s) to build subgraph. Please start with 0 to include the original graph.
+  for(i in 1:length(t)){
+    g <- subgraph.edges(graph=G,eids=which(E(G)$weight>t[i]),delete.vertices=F)
+    M <- as_adjacency_matrix(g,attr="weight")
+    deg <- degree(g,mode="all",normalized=F)
+    nClustFeat <- data.frame(deg = deg/max(deg))
+    betu <- betweenness(g,directed=F,weights=rep(1,length(E(g)$weight)),normalized=F)
+    betw <- betweenness(g,directed=F,weights=E(g)$weight,normalized=F)
+    nClustFeat$BetU <- betu/max(betu)
+    nClustFeat$BetW <- betw/max(betw)
+    rSelfLoop <- rep(0,nrow(M))
+    rInOut <- rep(0,nrow(M))
+    for(j in 1:nrow(M)){
+      if(sum(M[j,]) > 0){
+        rSelfLoop[j] <- M[j,j]/sum(M[j,])
+        rInOut[j] <- sum(M[,j])/sum(M[j,])
+      }
+    }
+    nClustFeat$SelfLoop <- rSelfLoop
+    nClustFeat$rInOut <- rInOut
+    comp <- components(g,mode="weak")
+    varBMC <- comp$membership
+    varBMC[which(varBMC!=1)] <- 0
+    nClustFeat$belongLC <- varBMC
+    ref <- which(varBMC==1)
+    g2 <- induced.subgraph(graph=g,vids=ref)
+    clos_u <- closeness(g2,mode="all",weights=rep(1,length(E(g2)$weight)),normalized=F)
+    clos_w <- closeness(g2,mode="all",weights = E(g2)$weight,normalized=F)
+    closu <- rep(0,nrow(M))
+    closw <- rep(0,nrow(M))
+    closu[ref] <- clos_u/max(clos_u)
+    closw[ref] <- clos_w/max(clos_w)
+    nClustFeat$closU <- closu
+    nClustFeat$closW <- closw
+    sumdist <- dist*M
+    di <- rep(0,nrow(M))
+    for(j in 1:nrow(M)){
+      di[j] <- (sum(sumdist[j,])+sum(sumdist[,j])-sumdist[j,j])/(sum(M[j,])+sum(M[,j])-M[j,j])
+    }
+    di[which(is.na(di))] <- 0
+    nClustFeat$avgd <- di/max(di)
+    nClustFeat[is.na(nClustFeat)] <- 0
+    write.table(nClustFeat,paste("featureNetSub",i,".csv",sep=""),row.names=F,col.names=F,sep=",")
+  }
+}
+  
 
 ############################
 ##### Network Plotting #####
