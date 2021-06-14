@@ -1,5 +1,5 @@
-
-
+### Data required:
+###   <Senegal_Communes_552.shp> is a shapefile of Senegal at commune level (522 entities according to the post DEC 2013 definitions)
 
 
 senCommune <- readOGR("Senegal_Communes_552.shp")
