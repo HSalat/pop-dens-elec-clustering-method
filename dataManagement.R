@@ -1,3 +1,5 @@
+library(rgdal)
+
 gridSenegal <- c(-17.54319,-11.34247,12.30786,16.69207,744,527)
 holesSenegal <- which(is.na(grid_senComPop))
 
@@ -88,13 +90,7 @@ length(unique(senCommune3@data$COD_ENTITE))
 
 lookUpTable <- data.frame(com552 = senCommuneProper@data$COD_ENTITE, com433 = test$CC_4)
 
-
-
 write.csv(lookUpTable,"lookUpTable.csv")
-
-unique(test$CC_45)
-
-unique(test)
 
 senCommune3@data$CC_45 <- test$CC_45
 senCommune3@data$check <- senCommune3@data$COD_ENTITE
