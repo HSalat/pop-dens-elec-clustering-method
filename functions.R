@@ -704,3 +704,227 @@ radian.rescale <- function(x, start=0, direction=1) {
   c.rotate <- function(x) (x + start) %% (2 * pi) * direction
   c.rotate(scales::rescale(x, c(0, 2 * pi), range(x)))
 }
+  
+  
+##########################
+##### Autoclustering #####
+##########################
+  
+  
+# Functions:
+# autoClust(data,var,t,comp = NULL,method.clust = 'complete',method.purity = 'bins')
+# nameClust(mpd,t,comp = NULL,dist = 'Sd',time = 'D',unit = "V",var = 'dens',method.clust = 'complete',method.purity = 'bins')
+# autoExpctd(mpd,t,frame,comp = NULL,dist = 'Sd',time = 'D',unit = "V",var = 'dens',method.clust = 'complete',method.purity = 'bins')
+
+# autoClust requires already loaded data
+# nameClust loads the data from the variable names
+
+# <data> is a distance matrix
+# <var> is a vector of external values for each row of <data> to test clusters' purity
+# <t> is the threshold(s) triggering a new division of a cluster. It should be a vector with a threshold between 0 and 1 for each bin if bins are used,
+# or a number if variance is used
+# <comp> defines the bins if purity is determined using bins
+# <method.clust> method for hierarchical clustering. Choose "complete" (max distance) or "mean" (mean distance)
+# <method.purity> method for evaluating the quality of clusters. Choose "bins" or "var" (variance)
+
+# <mpd> Type of mobile phone data. Options are 'T', 'C', 'L'.
+# <dist> Type of distance matrix: "Sd" or "Cor"
+# <time> Length of considered period: 'D', 'W' or 'Y'
+# <unit> Tower ('T') or Voronoi cell ('V'). Currently, only Voronoi is supported.
+
+
+
+#######
+####### Functions
+#######
+
+
+
+# Cluster purity based on bins
+ispure1 <- function(dend,var,comp,t){
+  test <- FALSE
+  n <- length(comp)-1
+  for(i in 1:n){
+    if(length(which(var[as.numeric(labels(dend))] >= comp[i] & var[as.numeric(labels(dend))] <= comp[i+1])) > length(labels(dend))*t[i]){
+      test <- TRUE
+    }
+  }
+  if(test){
+    return(list(labels(dend)))
+  }else{
+    return(c(ispure1(dend[[1]],var,comp,t),ispure1(dend[[2]],var,comp,t)))
+  }
+}
+
+# Cluster purity based on variance
+ispure2 <- function(dend,var,t){
+  test <- TRUE
+  if(sd(var[as.numeric(labels(dend))]) > t & length(labels(dend))>1){
+      test <- FALSE
+  }
+  if(test){
+    return(list(labels(dend)))
+  }else{
+    return(c(ispure2(dend[[1]],var,t),ispure2(dend[[2]],var,t)))
+  }
+}
+
+# From data to clustered
+autoClust <- function(data,var,t,comp = NULL,method.clust = 'complete',method.purity = 'bins'){
+  data <- as.dist(data)
+  dend <- as.dendrogram(hclust(data,method = method.clust))
+  if(method.purity == 'bins'){
+    l <- ispure1(dend,var,comp,t)
+    message(paste("Number of clusters:",length(l),sep = " "))
+    return(l)
+  }else{
+    l <- ispure2(dend,var,t)
+    message(paste("Number of clusters:",length(l),sep = " "))
+    return(l)
+  }
+}
+
+##### New dens
+nameClust <- function(mpd,t,comp = NULL,dist = 'Sd',time = 'D',unit = "V",var = 'dens',method.clust = 'complete',method.purity = 'bins'){
+  data <- read.csv(file = paste("Data/z_dMat_",time,dist,"_",mpd,"_",unit,".csv",sep=""),header = F)
+  data <- as.matrix(data)
+  colnames(data) <- 1:nrow(data)
+  if(var == 'dens' & unit == 'V'){
+    var <- vorData$dens
+  }else if(var == 'night' & unit == 'V'){
+    var <- vorData$nightlight
+  }else if(var == 'dens' & unit == 'T'){
+    var <- densV
+  }else if(var == 'night' & unit == 'T'){
+    var <- elecV
+  }
+  return(autoClust(data,var,t,comp,method.clust,method.purity))
+}
+
+
+#####
+
+
+# From names to clustered
+nameClust <- function(mpd,t,comp = NULL,dist = 'Sd',time = 'D',unit = "V",var = 'dens',method.clust = 'complete',method.purity = 'bins'){
+  data <- read.csv(file = paste("Data/z_dMat_",time,dist,"_",mpd,"_",unit,".csv",sep=""),header = F)
+  data <- as.matrix(data)
+  data[is.na(data)] <- 1
+  colnames(data) <- 1:nrow(data)
+  if(unit == 'V'){
+    print("V no longer supported")
+  }else if(var == 'dens' & unit == 'T'){
+    var <- densV
+  }else if(var == 'night' & unit == 'T'){
+    var <- elecV
+  }
+  return(autoClust(data,var,t,comp,method.clust,method.purity))
+}
+
+# Computation of the expected value inside each cluster
+autoExpctd <- function(mpd,t,frame,comp = NULL,dist = 'Sd',time = 'D',unit = "V",var = 'dens',method.clust = 'complete',method.purity = 'bins'){
+  base <- nameClust(mpd,t,comp,dist,time,unit,var,method.clust,method.purity)
+  expectedC <- rep(0,length(base))
+  for(i in 1:length(base)){
+    expectedC[i] <- mean(get(paste(var,"V",sep=""))[as.numeric(base[[i]])])
+  }
+  n <- ncol(frame)+1
+  frame[,n] <- 0
+  colnames(frame)[n] <- paste("Method",n-1,sep="")
+  for(i in 1:1666){
+    if(any(sapply(base, function(y) i %in% y)))
+      frame[i,n] <- expectedC[which(sapply(base, function(y) i %in% y))]
+  }
+  return(frame)
+}
+
+# Computation of the expected value inside each cluster with purity records
+autoExpctdP <- function(mpd,t,frame,comp,dist = 'Sd',time = 'D',unit = "V",var = 'dens',method.clust = 'complete',method.purity = 'bins'){
+  base <- nameClust(mpd,t,comp,dist,time,unit,var,method.clust,method.purity)
+  b <- length(base)
+  expectedC <- rep(0,b)
+  p <- rep(0,b)
+  for(i in 1:b){
+    vect <- get(paste(var,"V",sep=""))[as.numeric(base[[i]])]
+    expectedC[i] <- mean(vect)
+    n <- length(comp)-1
+    p2 <- rep(0,n)
+    for(j in 1:n){
+      p2[j] <- length(which(vect >= comp[j] & vect <= comp[j+1]))
+    }
+    p[i] <- max(p2)/length(vect)
+  }
+  n <- ncol(frame)+1
+  frame[,c(n,n+1)] <- 0
+  colnames(frame)[c(n,n+1)] <- c(paste("Method",n/2,sep=""),paste("Pur",n/2,sep=""))
+  for(i in 1:1666){
+    if(any(sapply(base, function(y) i %in% y)))
+      frame[i,n] <- expectedC[which(sapply(base, function(y) i %in% y))]
+      frame[i,n+1] <- p[which(sapply(base, function(y) i %in% y))]
+  }
+  return(frame)
+}
+
+autoExpctdFeatP <- function(mpd,t,frame,comp,unit = "V",var = 'dens',method.clust = 'complete',method.purity = 'bins'){
+  data <- read.csv(file = paste("Data/fMat_",mpd,"_",unit,".csv",sep=""),header=F)
+  data <- data[1:1666,]
+  data <- dist(data)
+  data[which(is.na(data))] <- 1
+  base <- autoClust(data,get(paste(var,"V",sep="")),t,comp,method.clust,method.purity)
+  b <- length(base)
+  expectedC <- rep(0,b)
+  p <- rep(0,b)
+  for(i in 1:b){
+    vect <- get(paste(var,"V",sep=""))[as.numeric(base[[i]])]
+    expectedC[i] <- mean(vect)
+    n <- length(comp)-1
+    p2 <- rep(0,n)
+    for(j in 1:n){
+      p2[j] <- length(which(vect >= comp[j] & vect <= comp[j+1]))
+    }
+    p[i] <- max(p2)/length(vect)
+  }
+  n <- ncol(frame)+1
+  frame[,c(n,n+1)] <- 0
+  colnames(frame)[c(n,n+1)] <- c(paste("Method",n/2,sep=""),paste("Pur",n/2,sep=""))
+  for(i in 1:1666){
+    if(any(sapply(base, function(y) i %in% y)))
+      frame[i,n] <- expectedC[which(sapply(base, function(y) i %in% y))]
+    frame[i,n+1] <- p[which(sapply(base, function(y) i %in% y))]
+  }
+  return(frame)
+}
+
+N = 1
+frame = clustExpectedDens
+var='night',unit="")
+
+range(nightV)
+
+autoExpctdFeatNetP <- function(N,t,frame,comp,unit = "T",var = 'dens',method.clust = 'complete',method.purity = 'bins'){
+  data <- read.csv(file = paste("Data/featureNetSub",unit,as.character(N),".csv",sep=""),header=F)
+  data <- dist(data)
+  base <- autoClust(data,get(paste(var,"V",sep="")),t,comp,method.clust,method.purity)
+  b <- length(base)
+  expectedC <- rep(0,b)
+  p <- rep(0,b)
+  for(i in 1:b){
+    vect <- get(paste(var,"V",sep=""))[as.numeric(base[[i]])]
+    expectedC[i] <- mean(vect)
+    n <- length(comp)-1
+    p2 <- rep(0,n)
+    for(j in 1:n){
+      p2[j] <- length(which(vect >= comp[j] & vect <= comp[j+1]))
+    }
+    p[i] <- max(p2)/length(vect)
+  }
+  n <- ncol(frame)+1
+  frame[,c(n,n+1)] <- 0
+  colnames(frame)[c(n,n+1)] <- c(paste("Method",n/2,sep=""),paste("Pur",n/2,sep=""))
+  for(i in 1:1666){
+    if(any(sapply(base, function(y) i %in% y)))
+      frame[i,n] <- expectedC[which(sapply(base, function(y) i %in% y))]
+    frame[i,n+1] <- p[which(sapply(base, function(y) i %in% y))]
+  }
+  return(frame)
+}
