@@ -4,6 +4,8 @@ This repository contains the supporting code for the article: Salat, Smoreda, Sc
 
 The project is meant to be used as a single workspace (variables created in one file are called directly from other files).
 
+Only the content of the repository is described here, for a description of the methods please refer to the article.
+
 ## Data
 
 Some of the public and non sensitive data are stored on OSF. The rest can only be accessed by requesting permission from Orange/Sonatel.
