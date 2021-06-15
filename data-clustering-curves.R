@@ -554,12 +554,12 @@ for(i in names3[1:6]){
 }
 
 
-#####----------------#####
+##########################
 ##### Curve Features #####
-#####----------------#####
+##########################
 
 
-# This is not used, although potentially interesting
+# Alternative method to cluster on a feature table instead of a distance matrix. This is not used, although potentially interesting.
 
 
 test <- premat3[750,]
