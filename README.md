@@ -10,4 +10,4 @@ Some of the public and non sensitive data are stored on OSF. The rest can only b
 
 ## Files
 
-- `correlations-table1.R` contains the code to compute Table 1 of the article (up to l. 128) and some visualisations, additional tests and interesting alternatives methods that were not included in the final article.
+- `results-correlations-table1.R` contains the code to compute Table 1 of the article (up to l. 128) and some visualisations, additional tests and interesting alternatives methods that were not included in the final article.
