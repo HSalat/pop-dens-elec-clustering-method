@@ -4,7 +4,7 @@ This repository contains the supporting code for the article: Salat, Smoreda, Sc
 
 The project is meant to be used as a single workspace (variables created in one file are called directly from other files).
 
-Only the content of the repository is described here, for a description of the methods please refer to the article.
+Only the content of the repository is described here, for a description of the methods, please refer to the article.
 
 ## Data
 
