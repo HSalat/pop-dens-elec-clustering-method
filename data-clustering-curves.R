@@ -1,7 +1,17 @@
+### Required data:
+###   <SET1S_XX> are a series of Call Details Record (CDR) for text messages in Senegal in 2013 operated by Sonatel, sorted by month. Access needs to be requested from Orange/Sonatel.
+###   <SET1V_XX> are a series of Call Details Record (CDR) for calls in Senegal in 2013 operated by Sonatel, sorted by month. Access needs to be requested from Orange/Sonatel.
+
+
+folderin <- "data/"
+
+
 ########################################
 ##### Prepared data for clustering #####
 ########################################
 
+
+# data averaged per antenna site
 ref <- data.frame(vorId=towerloc$tvId,towId=towerloc$tId)
 
 i=1
@@ -35,37 +45,43 @@ for(i in 2:12){
 dataL <- merge(dataL,ref,by.x="V2",by.y="towId",all.x = T)
 
 
-#####-------------------#####
-##### Distance matrices #####
-#####-------------------#####
+#####------------------
+##### Distance matrices 
+#####------------------
+
+
+# Produces distance matrices in the format: <z_dMat_DSd_T_V>, where
+#   z means NA values are treated as zeros
+#   {D,W,Y} means daily, weekly or yearly aggregates
+#   {Sd,Cor} is the distance chosen between 'standard deviation' and 'correlation' between any two curves
+#   {T,C,L} means number of text messages, number of calls or call length
+#   {T,V} is the geographical unit considered, only V for Voronoi has been used
 
 
 # Choose what to do with "missing values" in the table:
-mv <- NA
+#mv <- NA
 mv <- 0
 
-#### Day
+
+#### Daily
 
 ### Texts
 
-data2 <- data
-data2$V3 <- substr(data2$V1,12,13)
-data2$V3 <- as.numeric(data2$V3)
-data2 <- aggregate(V4~V2+V3, data2, mean)
-premat <- matrix(mv,ncol=24,nrow=1666)
-for(i in 1:nrow(data2)){
-  premat[data2$V2[i],data2$V3[i]+1] <- data2$V4[i]
-}
+#data2 <- data
+#data2$V3 <- substr(data2$V1,12,13)
+#data2$V3 <- as.numeric(data2$V3)
+#data2 <- aggregate(V4~V2+V3, data2, mean)
+#premat <- matrix(mv,ncol=24,nrow=1666)
+#for(i in 1:nrow(data2)){
+#  premat[data2$V2[i],data2$V3[i]+1] <- data2$V4[i]
+#}
 
-prematDT <- premat
+#prematDT <- premat
 
-z_dMat_DSd_T_T <- distMat(premat,0,method="sd")
-z_dMat_DCor_T_T <- distMat(premat,0,method="cor")
-z_dMat_DCor_T_T[is.na(z_dMat_DCor_T_T)] <- 1
+#z_dMat_DSd_T_T <- distMat(premat,0,method="sd")
+#z_dMat_DCor_T_T <- distMat(premat,0,method="cor")
+#z_dMat_DCor_T_T[is.na(z_dMat_DCor_T_T)] <- 1 # set NA values to maximum distance
 
-
-
-## Voronoi
 data2 <- data
 data2 <- data2[which(!is.na(data2$vorId)),]
 data2 <- aggregate(V4~V1+vorId,data2,sum)
@@ -97,32 +113,26 @@ for(i in 1:1298){
 }
 
 z_dMat_DCor_T_V <- distMat(premat,0,method="cor")
-z_dMat_DCor_T_V[is.na(z_dMat_DCor_T_V)] <- 1
+z_dMat_DCor_T_V[is.na(z_dMat_DCor_T_V)] <- 1 # set NA values to maximum distance
 
-write.table(z_dMat_DCor_T_V,"Data/z_dMat_DCor_T_V.csv",row.names=F,col.names=F,sep=",")
-
-# a <- dMat_DSd_T_V/max(dMat_DSd_T_V,na.rm=T)
-# b <- dMat_DCor_T_V/max(dMat_DCor_T_V,na.rm=T)
-# c <- a-b
-# c[1:5,1:5]
+write.table(z_dMat_DCor_T_V,"data/z_dMat_DCor_T_V.csv",row.names=F,col.names=F,sep=",")
 
 ### Calls
 
-data2 <- dataV
-data2$V3 <- substr(data2$V1,12,13)
-data2$V3 <- as.numeric(data2$V3)
-data2 <- aggregate(V4~V2+V3, data2, mean)
-premat <- matrix(mv,ncol=24,nrow=1666)
-for(i in 1:nrow(data2)){
-  premat[data2$V2[i],data2$V3[i]+1] <- data2$V4[i]
-}
+#data2 <- dataV
+#data2$V3 <- substr(data2$V1,12,13)
+#data2$V3 <- as.numeric(data2$V3)
+#data2 <- aggregate(V4~V2+V3, data2, mean)
+#premat <- matrix(mv,ncol=24,nrow=1666)
+#for(i in 1:nrow(data2)){
+#  premat[data2$V2[i],data2$V3[i]+1] <- data2$V4[i]
+#}
 
-prematDC <- premat
+#prematDC <- premat
 
-z_dMat_DSd_C_T <- distMat(premat,0,method="sd")
-z_dMat_DCor_C_T <- distMat(premat,0,method="cor")
+#z_dMat_DSd_C_T <- distMat(premat,0,method="sd")
+#z_dMat_DCor_C_T <- distMat(premat,0,method="cor")
 
-## Voronoi
 data2 <- dataV
 data2 <- data2[which(!is.na(data2$vorId)),]
 data2 <- aggregate(V4~V1+vorId,data2,sum)
@@ -151,21 +161,20 @@ which(diag(z_dMat_DCor_C_V)>0)
 
 ### Length
 
-data2 <- dataL
-data2$V3 <- substr(data2$V1,12,13)
-data2$V3 <- as.numeric(data2$V3)
-data2 <- aggregate(V5~V2+V3, data2, mean)
-premat <- matrix(mv,ncol=24,nrow=1666)
-for(i in 1:nrow(data2)){
-  premat[data2$V2[i],data2$V3[i]+1] <- data2$V5[i]
-}
+#data2 <- dataL
+#data2$V3 <- substr(data2$V1,12,13)
+#data2$V3 <- as.numeric(data2$V3)
+#data2 <- aggregate(V5~V2+V3, data2, mean)
+#premat <- matrix(mv,ncol=24,nrow=1666)
+#for(i in 1:nrow(data2)){
+#  premat[data2$V2[i],data2$V3[i]+1] <- data2$V5[i]
+#}
 
-prematDL <- premat
+#prematDL <- premat
 
-z_dMat_DSd_L_T <- distMat(premat,0,method="sd")
-z_dMat_DCor_L_T <- distMat(premat,0,method="cor")
+#z_dMat_DSd_L_T <- distMat(premat,0,method="sd")
+#z_dMat_DCor_L_T <- distMat(premat,0,method="cor")
 
-## Voronoi
 data2 <- dataL
 data2 <- data2[which(!is.na(data2$vorId)),]
 data2 <- aggregate(V5~V1+vorId,data2,sum)
@@ -181,8 +190,9 @@ z_dMat_DSd_L_V <- distMat(premat,0,method="sd")
 z_dMat_DCor_L_V <- distMat(premat,0,method="cor")
 
 
-#### Week
+#### Weekly
 
+# Number of days in a month
 ref2 <- c(0,31,28,31,30,31,30,31,31,30,31,30)
 ref <- ref2
 for(i in 1:12){
@@ -191,37 +201,36 @@ for(i in 1:12){
 
 ### Texts
 
-data2 <- data
-data2$m <- substr(data2$V1,6,7)
-data2$m <- as.numeric(data2$m)
-data2$d <- substr(data2$V1,9,10)
-data2$d <- as.numeric(data2$d)
-data2$h <- substr(data2$V1,12,13)
-data2$day <- (ref[data2$m]+data2$d) %% 7 + 1
-data2$day <- as.character(data2$day)
-data2$dh <- paste(data2$day,data2$h,sep="")
-data2$dh <- as.integer(data2$dh)
-data2 <- aggregate(V4~V2+dh, data2, mean, na.rm=T)
-data2$d <- as.integer(substr(data2$dh,1,1))-1
-data2$h <- as.integer(substr(data2$dh,2,3))+1
-data2$temp <- data2$d*24+data2$h
-data2$temp <- as.integer(data2$temp)
-premat2 <- matrix(mv,ncol=24*7,nrow=1666)
-for(i in 1:nrow(data2)){
-  premat2[data2$V2[i],data2$temp[i]] <- data2$V4[i]
-}
+#data2 <- data
+#data2$m <- substr(data2$V1,6,7)
+#data2$m <- as.numeric(data2$m)
+#data2$d <- substr(data2$V1,9,10)
+#data2$d <- as.numeric(data2$d)
+#data2$h <- substr(data2$V1,12,13)
+#data2$day <- (ref[data2$m]+data2$d) %% 7 + 1
+#data2$day <- as.character(data2$day)
+#data2$dh <- paste(data2$day,data2$h,sep="")
+#data2$dh <- as.integer(data2$dh)
+#data2 <- aggregate(V4~V2+dh, data2, mean, na.rm=T)
+#data2$d <- as.integer(substr(data2$dh,1,1))-1
+#data2$h <- as.integer(substr(data2$dh,2,3))+1
+#data2$temp <- data2$d*24+data2$h
+#data2$temp <- as.integer(data2$temp)
+#premat2 <- matrix(mv,ncol=24*7,nrow=1666)
+#for(i in 1:nrow(data2)){
+#  premat2[data2$V2[i],data2$temp[i]] <- data2$V4[i]
+#}
 
-prematWT <- premat2
+#prematWT <- premat2
 
-z_dMat_WSd_T_T <- distMat(premat2,0,method="sd")
-z_dMat_WCor_T_T <- distMat(premat2,0,method="cor")
+#z_dMat_WSd_T_T <- distMat(premat2,0,method="sd")
+#z_dMat_WCor_T_T <- distMat(premat2,0,method="cor")
 
 # plot(1:168,1:168,pch="",ylim=c(0,8000))
 # for(i in 1:1666){
 #   lines(1:168,premat2[i,],col=alpha(palettespe[i %% 12],0.2))
 # }
 
-## Voronoi
 data2 <- data
 data2 <- data2[which(!is.na(data2$vorId)),]
 data2 <- aggregate(V4~V1+vorId,data2,sum)
@@ -258,37 +267,36 @@ write.table(z_dMat_WCor_T_V,"Data/z_dMat_WCor_T_V.csv",row.names=F,col.names=F,s
 
 ### Calls
 
-data2 <- dataV
-data2$m <- substr(data2$V1,6,7)
-data2$m <- as.numeric(data2$m)
-data2$d <- substr(data2$V1,9,10)
-data2$d <- as.numeric(data2$d)
-data2$h <- substr(data2$V1,12,13)
-data2$day <- (ref[data2$m]+data2$d) %% 7 + 1
-data2$day <- as.character(data2$day)
-data2$dh <- paste(data2$day,data2$h,sep="")
-data2$dh <- as.integer(data2$dh)
-data2 <- aggregate(V4~V2+dh, data2, mean, na.rm=T)
-data2$d <- as.integer(substr(data2$dh,1,1))-1
-data2$h <- as.integer(substr(data2$dh,2,3))+1
-data2$temp <- data2$d*24+data2$h
-data2$temp <- as.integer(data2$temp)
-premat2 <- matrix(mv,ncol=24*7,nrow=1666)
-for(i in 1:nrow(data2)){
-  premat2[data2$V2[i],data2$temp[i]] <- data2$V4[i]
-}
+#data2 <- dataV
+#data2$m <- substr(data2$V1,6,7)
+#data2$m <- as.numeric(data2$m)
+#data2$d <- substr(data2$V1,9,10)
+#data2$d <- as.numeric(data2$d)
+#data2$h <- substr(data2$V1,12,13)
+#data2$day <- (ref[data2$m]+data2$d) %% 7 + 1
+#data2$day <- as.character(data2$day)
+#data2$dh <- paste(data2$day,data2$h,sep="")
+#data2$dh <- as.integer(data2$dh)
+#data2 <- aggregate(V4~V2+dh, data2, mean, na.rm=T)
+#data2$d <- as.integer(substr(data2$dh,1,1))-1
+#data2$h <- as.integer(substr(data2$dh,2,3))+1
+#data2$temp <- data2$d*24+data2$h
+#data2$temp <- as.integer(data2$temp)
+#premat2 <- matrix(mv,ncol=24*7,nrow=1666)
+#for(i in 1:nrow(data2)){
+#  premat2[data2$V2[i],data2$temp[i]] <- data2$V4[i]
+#}
 
-prematWC <- premat2
+#prematWC <- premat2
 
-z_dMat_WSd_C_T <- distMat(premat2,0,method="sd")
-z_dMat_WCor_C_T <- distMat(premat2,0,method="cor")
+#z_dMat_WSd_C_T <- distMat(premat2,0,method="sd")
+#z_dMat_WCor_C_T <- distMat(premat2,0,method="cor")
 
 #plot(1:168,1:168,pch="",ylim=c(0,4500))
 #for(i in 1:1666){
 #  lines(1:168,premat2[i,],col=alpha(palettespe[i %% 12],0.2))
 #}
 
-## Voronoi
 data2 <- dataV
 data2 <- data2[which(!is.na(data2$vorId)),]
 data2 <- aggregate(V4~V1+vorId,data2,sum)
@@ -316,32 +324,31 @@ z_dMat_WCor_C_V <- distMat(premat2,0,method="cor")
 
 ### Length
 
-data2 <- dataL
-data2$m <- substr(data2$V1,6,7)
-data2$m <- as.numeric(data2$m)
-data2$d <- substr(data2$V1,9,10)
-data2$d <- as.numeric(data2$d)
-data2$h <- substr(data2$V1,12,13)
-data2$day <- (ref[data2$m]+data2$d) %% 7 + 1
-data2$day <- as.character(data2$day)
-data2$dh <- paste(data2$day,data2$h,sep="")
-data2$dh <- as.integer(data2$dh)
-data2 <- aggregate(V5~V2+dh, data2, mean, na.rm=T)
-data2$d <- as.integer(substr(data2$dh,1,1))-1
-data2$h <- as.integer(substr(data2$dh,2,3))+1
-data2$temp <- data2$d*24+data2$h
-data2$temp <- as.integer(data2$temp)
-premat2 <- matrix(mv,ncol=24*7,nrow=1666)
-for(i in 1:nrow(data2)){
-  premat2[data2$V2[i],data2$temp[i]] <- data2$V5[i]
-}
+#data2 <- dataL
+#data2$m <- substr(data2$V1,6,7)
+#data2$m <- as.numeric(data2$m)
+#data2$d <- substr(data2$V1,9,10)
+#data2$d <- as.numeric(data2$d)
+#data2$h <- substr(data2$V1,12,13)
+#data2$day <- (ref[data2$m]+data2$d) %% 7 + 1
+#data2$day <- as.character(data2$day)
+#data2$dh <- paste(data2$day,data2$h,sep="")
+#data2$dh <- as.integer(data2$dh)
+#data2 <- aggregate(V5~V2+dh, data2, mean, na.rm=T)
+#data2$d <- as.integer(substr(data2$dh,1,1))-1
+#data2$h <- as.integer(substr(data2$dh,2,3))+1
+#data2$temp <- data2$d*24+data2$h
+#data2$temp <- as.integer(data2$temp)
+#premat2 <- matrix(mv,ncol=24*7,nrow=1666)
+#for(i in 1:nrow(data2)){
+#  premat2[data2$V2[i],data2$temp[i]] <- data2$V5[i]
+#}
 
-prematWL <- premat2
+#prematWL <- premat2
 
-z_dMat_WSd_L_T <- distMat(premat2,0,method="sd")
-z_dMat_WCor_L_T <- distMat(premat2,0,method="cor")
+#z_dMat_WSd_L_T <- distMat(premat2,0,method="sd")
+#z_dMat_WCor_L_T <- distMat(premat2,0,method="cor")
 
-## Voronoi
 data2 <- dataL
 data2 <- data2[which(!is.na(data2$vorId)),]
 data2 <- aggregate(V5~V1+vorId,data2,sum)
@@ -389,29 +396,29 @@ for(i in names[13:24]){
 }
 
 
-#### Year
+#### Yearly
 
 ### Texts
 
-data2 <- data
-data2$m <- substr(data2$V1,6,7)
-data2$m <- as.numeric(data2$m)
-data2$d <- substr(data2$V1,9,10)
-data2$d <- as.numeric(data2$d)-1
-data2$h <- substr(data2$V1,12,13)
-data2$h <- as.numeric(data2$h)+1
-data2$index <- (ref[data2$m]+data2$d)*24+data2$h
-data2$index <- as.integer(data2$index)
-premat3 <- matrix(mv,ncol=24*365,nrow=1666)
-for(i in 1:nrow(data2)){
-  premat3[data2$V2[i],data2$index[i]] <- data2$V4[i]
-}
+#data2 <- data
+#data2$m <- substr(data2$V1,6,7)
+#data2$m <- as.numeric(data2$m)
+#data2$d <- substr(data2$V1,9,10)
+#data2$d <- as.numeric(data2$d)-1
+#data2$h <- substr(data2$V1,12,13)
+#data2$h <- as.numeric(data2$h)+1
+#data2$index <- (ref[data2$m]+data2$d)*24+data2$h
+#data2$index <- as.integer(data2$index)
+#premat3 <- matrix(mv,ncol=24*365,nrow=1666)
+#for(i in 1:nrow(data2)){
+#  premat3[data2$V2[i],data2$index[i]] <- data2$V4[i]
+#}
 
-prematYT <- premat3
+#prematYT <- premat3
 
-fMat_T_T <- curveFeatures(premat3)
-z_dMat_YSd_T_T <- distMat(premat3,100,method="sd")
-z_dMat_YCor_T_T <- distMat(premat3,100,method="cor")
+#fMat_T_T <- curveFeatures(premat3)
+#z_dMat_YSd_T_T <- distMat(premat3,100,method="sd")
+#z_dMat_YCor_T_T <- distMat(premat3,100,method="cor")
 
 
 # plot(1:8760,1:8760,pch="",ylim=c(0,5000),xlim=c(2000,4000))
@@ -420,7 +427,6 @@ z_dMat_YCor_T_T <- distMat(premat3,100,method="cor")
 #   lines(1:8760,premat3[i,],col=alpha(palettespe[i %% 12],0.2))
 # }
 
-## Voronoi
 data2 <- data
 data2 <- data2[which(!is.na(data2$vorId)),]
 data2 <- aggregate(V4~V1+vorId,data2,sum)
@@ -447,28 +453,26 @@ nrow(z_dMat_YSd_T_V)
 
 ### Calls
 
-data2 <- dataV
-data2$m <- substr(data2$V1,6,7)
-data2$m <- as.numeric(data2$m)
-data2$d <- substr(data2$V1,9,10)
-data2$d <- as.numeric(data2$d)-1
-data2$h <- substr(data2$V1,12,13)
-data2$h <- as.numeric(data2$h)+1
-data2$index <- (ref[data2$m]+data2$d)*24+data2$h
-data2$index <- as.integer(data2$index)
-premat3 <- matrix(mv,ncol=24*365,nrow=1666)
-for(i in 1:nrow(data2)){
-  premat3[data2$V2[i],data2$index[i]] <- data2$V4[i]
-}
+#data2 <- dataV
+#data2$m <- substr(data2$V1,6,7)
+#data2$m <- as.numeric(data2$m)
+#data2$d <- substr(data2$V1,9,10)
+#data2$d <- as.numeric(data2$d)-1
+#data2$h <- substr(data2$V1,12,13)
+#data2$h <- as.numeric(data2$h)+1
+#data2$index <- (ref[data2$m]+data2$d)*24+data2$h
+#data2$index <- as.integer(data2$index)
+#premat3 <- matrix(mv,ncol=24*365,nrow=1666)
+#for(i in 1:nrow(data2)){
+#  premat3[data2$V2[i],data2$index[i]] <- data2$V4[i]
+#}
 
-prematYC <- premat3
+#prematYC <- premat3
 
-fMat_C_T <- curveFeatures(premat3)
-z_dMat_YSd_C_T <- distMat(premat3,100,method="sd")
-z_dMat_YCor_C_T <- distMat(premat3,100,method="cor")
+#fMat_C_T <- curveFeatures(premat3)
+#z_dMat_YSd_C_T <- distMat(premat3,100,method="sd")
+#z_dMat_YCor_C_T <- distMat(premat3,100,method="cor")
 
-
-## Voronoi
 data2 <- dataV
 data2 <- data2[which(!is.na(data2$vorId)),]
 data2 <- aggregate(V4~V1+vorId,data2,sum)
@@ -491,31 +495,28 @@ z_dMat_YCor_C_V <- distMat(premat3,100,method="cor")
 
 z_dMat_YCor_C_V[which(is.na(z_dMat_YCor_C_V))] <- 1
 
-
 ### Length
 
-data2 <- dataL
-data2$m <- substr(data2$V1,6,7)
-data2$m <- as.numeric(data2$m)
-data2$d <- substr(data2$V1,9,10)
-data2$d <- as.numeric(data2$d)-1
-data2$h <- substr(data2$V1,12,13)
-data2$h <- as.numeric(data2$h)+1
-data2$index <- (ref[data2$m]+data2$d)*24+data2$h
-data2$index <- as.integer(data2$index)
-premat3 <- matrix(mv,ncol=24*365,nrow=1666)
-for(i in 1:nrow(data2)){
-  premat3[data2$V2[i],data2$index[i]] <- data2$V5[i]
-}
+#data2 <- dataL
+#data2$m <- substr(data2$V1,6,7)
+#data2$m <- as.numeric(data2$m)
+#data2$d <- substr(data2$V1,9,10)
+#data2$d <- as.numeric(data2$d)-1
+#data2$h <- substr(data2$V1,12,13)
+#data2$h <- as.numeric(data2$h)+1
+#data2$index <- (ref[data2$m]+data2$d)*24+data2$h
+#data2$index <- as.integer(data2$index)
+#premat3 <- matrix(mv,ncol=24*365,nrow=1666)
+#for(i in 1:nrow(data2)){
+#  premat3[data2$V2[i],data2$index[i]] <- data2$V5[i]
+#}
 
-prematYL <- premat3
+#prematYL <- premat3
 
-fMat_L_T <- curveFeatures(premat3)
-z_dMat_YSd_L_T <- distMat(premat3,100,method="sd")
-z_dMat_YCor_L_T <- distMat(premat3,100,method="cor")
+#fMat_L_T <- curveFeatures(premat3)
+#z_dMat_YSd_L_T <- distMat(premat3,100,method="sd")
+#z_dMat_YCor_L_T <- distMat(premat3,100,method="cor")
 
-
-## Voronoi
 data2 <- dataL
 data2 <- data2[which(!is.na(data2$vorId)),]
 data2 <- aggregate(V5~V1+vorId,data2,sum)
@@ -556,6 +557,9 @@ for(i in names3[1:6]){
 #####----------------#####
 ##### Curve Features #####
 #####----------------#####
+
+
+# This is not used, although potentially interesting
 
 
 test <- premat3[750,]
@@ -654,8 +658,10 @@ curveFeatures <- function(tseries){
 }
 
 
+#########################
+##### Visualisation #####
+#########################
 
-###############################
 
 library(fpc)
 
@@ -689,7 +695,6 @@ for(i in samp){
 }
 legend("topright",c("1","2","3","4","5","6"),col=alpha(palettespe[c(2,5,8,11,1,1)],0.4),pch=c(20,20,20,20,20,20))
 
-nrow(prematC)
 
 C <- matrix(0,ncol=24,nrow=4)
 for(i in 1:4){
@@ -795,10 +800,7 @@ for(i in 1:6){
   points(i,avg[i],col=palettespe[2*i])
 }
 
-
 ####
-
-
 
 test <- read.csv(file = "Data/z_dMat_YSd_C_V.csv",header=F)
 
@@ -813,13 +815,7 @@ list <- identify(test3)
 
 dend <- as.dendrogram(test3)
 sampTree(dend,6)
-
-
-
-
-
 dev.off()
-
 
 ####
 
@@ -868,7 +864,7 @@ for(i in 1:6){
 }
 
 
-#########################################
+#####################################################
 test <- read.csv(file = "Data/fMat_C_V.csv",header=F)
 test <- test[1:1298,]
 
@@ -889,76 +885,3 @@ for(i in 1:1666){
   }
 }
 legend("topright",c("1","2","3","4","5","6"),col=alpha(palettespe[seq(2,16,by=2)],0.4),pch=20)
-
-
-
-
-
-
-
-#####################################
-#### Bayesian Hierarchical clustering
-
-
-library(bclust)
-
-#
-test <- data.frame(c1 = rnorm(10), c2 = runif(10))
-test <- as.matrix(test)
-test.id <- 1:10
-
-#
-test <- read.csv(file = "Data/fMat_C_V.csv",header=F)
-test <- test[1:1298,]
-test <- as.matrix(test)
-
-mc.test <- meancss(test,test.id)
-
-optimfunc <- function(theta){
-  -loglikelihood(x.mean=mc.test$mean,x.css=mc.test$css,
-                 repno=mc.test$repno,transformed.par=theta)
-}
-
-transpar <- optim(rep(0,6),optimfunc,method="BFGS")$par
-result <- bclust(test,transformed.par=transpar)
-
-plot(result)
-
-
-######## kmeans direct curves
-
-prematT2 <- prematT
-
-ref <- rep(0,nrow(prematT2))
-for(i in 1:nrow(prematT2)){
-  ref[i] <- mean(prematT2[i,])
-}
-
-sampl <- which(ref>0)
-prematT2 <- prematT2[sampl,]
-
-for(i in 1:nrow(prematT2)){
-  prematT2[i,] <- prematT2[i,]/mean(prematT2[i,])
-}
-
-plot(1:24,1:24,ylim=c(0,20),pch="")
-for(i in 1:nrow(prematT2)){
-  lines(1:24,prematT2[i,])
-}
-
-n <- 5
-t <- kmeans(prematT2,n)
-
-towerloc$clust <- rep(NA,1666)
-for(i in 1:length(sampl)){
-    towerloc$clust[sampl[i]] <- t$cluster[i]
-}
-
-plot(1:1100,1:1100,pch="",ylim=c(0,50000),xlab="Shuffled Id",ylab="Density")
-for(i in sampl){
-  points(runif(1,1,1000),towerloc$dens[i],col=alpha(palettespe[towerloc$clust[i]*3-1],0.4),pch=20)
-}
-legend("topright",c("1","2","3","4"),col=alpha(palettespe[c(2,5,8,11)],0.4),pch=c(20,20,20,20))
-
-
-
