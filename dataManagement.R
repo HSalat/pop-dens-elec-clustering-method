@@ -13,6 +13,8 @@ library(rgdal)
 gridSenegal <- c(-17.54319,-11.34247,12.30786,16.69207,744,527) # coordinates of a bounding box around Senegal
 holesSenegal <- which(is.na(grid_senComPop)) # reference of empty spaces (e.g. Sea, different Country)
 
+monthslist <- c("jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec")
+
 
 
 
