@@ -15,7 +15,7 @@ Data provided on OSF:
 
 Data not provided:
 - Localisation of the antenna sites.
-- ...
+- Full call details records for the year 2013 in Senegal
 
 ## Files
 
