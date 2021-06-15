@@ -19,5 +19,5 @@ Data not provided:
 
 ## Files
 
-- `data-clustering-curves.R` creates the distance matrices between mobile phone activity curves to apply the clustering algorithm on. It also contains an alternative method to replace distance matrices by a feature table containing curve characteristics (such as seasonality, skewness...) to operate the clustering. There are also a number of plots that were used to generate illustrations for the article. 
+- `data-clustering-curves.R` creates the distance matrices between mobile phone activity curves to apply the clustering algorithm on. In addition, it contains an alternative method to replace distance matrices by a feature table containing curve characteristics (such as seasonality, skewness...) to operate the clustering. There are also a number of plots that were used to generate illustrations for the article. 
 - `results-correlations-table1.R` contains the code to compute Table 1 of the article (up to l. 128) and some visualisations, additional tests and interesting alternatives methods that were not included in the final article.
