@@ -1,75 +1,58 @@
-subset <- which(night>0)
-length(subset)
+attach(vor_data)
 
-subsetc <- which(night == 0)
+subset <- which(night > 0)
+subsetC <- intersect(subset,which(dens > 5000)) # defines "high density" areas
+subsetV <- intersect(subset,which(dens <= 5000)) # defines "low density" areas
 
-mean(dens[subsetc])
 
-cor(night,dens)^2
+######################
+##### Histograms #####
+######################
 
-# Histograms
 
 h <- hist(night[subset],breaks=1000,plot=F)
 h <- hist(dens[subset],breaks=1000,plot=F)
 h <- hist(texts[subset],breaks=1000,plot=F)
 h <- hist(calls[subset],breaks=1000,plot=F)
 h <- hist(length[subset],breaks=1000,plot=F)
-
-plot(h$mids,h$counts,type='h',xlab="x",ylab="Counts",cex.lab=1.3,cex.axis=1.3)
-
-# D and M are Poisson, N is not
-
-subsetC <- intersect(subset,which(dens > 5000))
-subsetV <- intersect(subset,which(dens <= 5000))
-
 h <- hist(length[subsetC],breaks=1000,plot=F)
 h <- hist(night[subsetC],breaks=1000,plot=F)
 h <- hist(dens[subsetC],breaks=1000,plot=F)
-
 h <- hist(length[subsetV],breaks=1000,plot=F)
 h <- hist(night[subsetV],breaks=1000,plot=F)
 h <- hist(dens[subsetV],breaks=1000,plot=F)
+
+plot(h$mids,h$counts,type='h',xlab="x",ylab="Counts",cex.lab=1.3,cex.axis=1.3)
+
+# Note: D and M are almost Poisson, N is not
 
 
 ############################################################
 ##### Regressions: Night from Mobile phone and Density #####
 ############################################################
 
-attach(vor_data)
-
-res_cor_energy <- data.frame(type=c("All","Cities","Villages"),
-                             dens2=c(rsq(night,dens2,subset),rsq(night,dens2,subsetC2),rsq(night,dens2,subsetV2)),
-                             texts=c(rsq(night,texts,subset),rsq(night,texts,subsetC2),rsq(night,texts,subsetV2)),
-                             calls=c(rsq(night,calls,subset),rsq(night,calls,subsetC2),rsq(night,calls,subsetV2)),
-                             length=c(rsq(night,length,subset),rsq(night,length,subsetC2),rsq(night,length,subsetV2)),
-                             logdens2=c(rsq(night,dens2,subset,2),rsq(night,dens2,subsetC2,2),rsq(night,dens2,subsetV2,2)),
-                             logtexts=c(rsq(night,texts,subset,2),rsq(night,texts,subsetC2,2),rsq(night,texts,subsetV2,2)),
-                             logcalls=c(rsq(night,calls,subset,2),rsq(night,calls,subsetC2,2),rsq(night,calls,subsetV2,2)),
-                             loglength=c(rsq(night,length,subset,2),rsq(night,length,subsetC2,2),rsq(night,length,subsetV2,2)),
-                             dens2ptexts=c(rsqP(night,texts,dens2,subset),rsqP(night,texts,dens2,subsetC2),rsqP(night,texts,dens2,subsetV2)),
-                             dens2pcalls=c(rsqP(night,calls,dens2,subset),rsqP(night,calls,dens2,subsetC2),rsqP(night,calls,dens2,subsetV2)),
-                             dens2plength=c(rsqP(night,length,dens2,subset),rsqP(night,length,dens2,subsetC2),rsqP(night,length,dens2,subsetV2))
-                             )
 
 res_cor_energy <- data.frame(type=c("All","Cities","Villages"),
                              dens=c(rsq(night,dens),rsq(night,dens,subsetC),rsq(night,dens,subsetV)),
                              texts=c(rsq(night,texts),rsq(night,texts,subsetC),rsq(night,texts,subsetV)),
                              calls=c(rsq(night,calls),rsq(night,calls,subsetC),rsq(night,calls,subsetV)),
                              length=c(rsq(night,length),rsq(night,length,subsetC),rsq(night,length,subsetV)),
-                             logdens=c(rsq(night,dens,subset,),rsq(night,dens,subsetC,),rsq(night,dens,subsetV,)),
-                             logtexts=c(rsq(night,texts,subset,),rsq(night,texts,subsetC,),rsq(night,texts,subsetV,)),
-                             logcalls=c(rsq(night,calls,subset,),rsq(night,calls,subsetC,),rsq(night,calls,subsetV,)),
-                             loglength=c(rsq(night,length,subset,),rsq(night,length,subsetC,),rsq(night,length,subsetV,)),
+                             logdens=c(rsq(night,dens,subset,2),rsq(night,dens,subsetC,),rsq(night,dens,subsetV,2)),
+                             logtexts=c(rsq(night,texts,subset,2),rsq(night,texts,subsetC,),rsq(night,texts,subsetV,2)),
+                             logcalls=c(rsq(night,calls,subset,2),rsq(night,calls,subsetC,),rsq(night,calls,subsetV,2)),
+                             loglength=c(rsq(night,length,subset,2),rsq(night,length,subsetC,),rsq(night,length,subsetV,2)),
                              densptexts=c(rsqP(night,texts,dens,subset),rsqP(night,texts,dens,subsetC),rsqP(night,texts,dens,subsetV)),
                              denspcalls=c(rsqP(night,calls,dens,subset),rsqP(night,calls,dens,subsetC),rsqP(night,calls,dens,subsetV)),
                              densplength=c(rsqP(night,length,dens,subset),rsqP(night,length,dens,subsetC),rsqP(night,length,dens,subsetV))
 )
+
 
 ###########################################################
 ##### Regressions: Elec from Mobile phone and Density #####
 ###########################################################
 
 
+# keep only relevant data
 indX <- which(texts>0)
 indX <- intersect(indX,which(elec > 0))
 indXC <- intersect(indX,subsetC)
@@ -114,41 +97,32 @@ resTexts_y <- lm(log(night[subset]) ~ log(texts[subset]))$residuals
 resCalls_y <- lm(log(night[subset]) ~ log(calls[subset]))$residuals
 resLength_y <- lm(log(night[subset]) ~ log(length[subset]))$residuals
 
-resTexts_y_C <- lm(log(night[subsetC2]) ~ log(texts[subsetC2]))$residuals
-resCalls_y_C <- lm(log(night[subsetC2]) ~ log(calls[subsetC2]))$residuals
-resLength_y_C <- lm(log(night[subsetC2]) ~ log(length[subsetC2]))$residuals
+resTexts_y_C <- lm(log(night[subsetC]) ~ log(texts[subsetC]))$residuals
+resCalls_y_C <- lm(log(night[subsetC]) ~ log(calls[subsetC]))$residuals
+resLength_y_C <- lm(log(night[subsetC]) ~ log(length[subsetC]))$residuals
 
-resTexts_y_V <- lm(log(night[subsetV2]) ~ log(texts[subsetV2]))$residuals
-resCalls_y_V <- lm(log(night[subsetV2]) ~ log(calls[subsetV2]))$residuals
-resLength_y_V <- lm(log(night[subsetV2]) ~ log(length[subsetV2]))$residuals
+resTexts_y_V <- lm(log(night[subsetV]) ~ log(texts[subsetV]))$residuals
+resCalls_y_V <- lm(log(night[subsetV]) ~ log(calls[subsetV]))$residuals
+resLength_y_V <- lm(log(night[subsetV]) ~ log(length[subsetV]))$residuals
 
 resTexts_y_pop <- lm(log(night[subset]/dens[subset]) ~ log(texts[subset]))$residuals
 resCalls_y_pop <- lm(log(night[subset]/dens[subset]) ~ log(calls[subset]))$residuals
 resLength_y_pop <- lm(log(night[subset]/dens[subset]) ~ log(length[subset]))$residuals
 
-# Cor with residuals
+# Correlations with residuals
 res_cor_dens <- data.frame(type=c("All","Cities","Villages"),
-                           texts=c(rsqL(dens[subset],texts[subset],exp(resTexts_y)),rsqL(dens[subsetC2],texts[subsetC2],exp(resTexts_y_C)),rsqL(dens[subsetV2],texts[subsetV2],exp(resTexts_y_V))),
-                           calls=c(rsqL(dens[subset],calls[subset],exp(resCalls_y)),rsqL(dens[subsetC2],calls[subsetC2],exp(resCalls_y_C)),rsqL(dens[subsetV2],calls[subsetV2],exp(resCalls_y_V))),
-                           length=c(rsqL(dens[subset],length[subset],exp(resLength_y)),rsqL(dens[subsetC2],length[subsetC2],exp(resLength_y_C)),rsqL(dens[subsetV2],length[subsetV2],exp(resLength_y_V)))
+                           texts=c(rsqL(dens[subset],texts[subset],exp(resTexts_y)),rsqL(dens[subsetC],texts[subsetC],exp(resTexts_y_C)),rsqL(dens[subsetV],texts[subsetV],exp(resTexts_y_V))),
+                           calls=c(rsqL(dens[subset],calls[subset],exp(resCalls_y)),rsqL(dens[subsetC],calls[subsetC],exp(resCalls_y_C)),rsqL(dens[subsetV],calls[subsetV],exp(resCalls_y_V))),
+                           length=c(rsqL(dens[subset],length[subset],exp(resLength_y)),rsqL(dens[subsetC],length[subsetC],exp(resLength_y_C)),rsqL(dens[subsetV],length[subsetV],exp(resLength_y_V)))
 )
 
-# Cor without residuals
+# Correlations without residuals
 res_cor_dens0 <- data.frame(type=c("All","Cities","Villages"),
                            texts=c(rsqP(dens[subset],texts[subset]),rsqP(dens[subsetC],texts[subsetC]),rsqP(dens[subsetV],texts[subsetV])),
                            calls=c(rsqP(dens[subset],calls[subset]),rsqP(dens[subsetC],calls[subsetC]),rsqP(dens[subsetV],calls[subsetV])),
                            length=c(rsqP(dens[subset],length[subset]),rsqP(dens[subsetC],length[subsetC]),rsqP(dens[subsetV],length[subsetV]))
 )
 
-corlog <- function(a,b){
-  return(cor(log(a),log(b))^2)
-}
-
-res_cor_dens1 <- data.frame(type=c("All","Cities","Villages"),
-                            texts=c(corlog(dens[subset],texts[subset]),corlog(dens[subsetC],texts[subsetC]),corlog(dens[subsetV],texts[subsetV])),
-                            calls=c(corlog(dens[subset],calls[subset]),corlog(dens[subsetC],calls[subsetC]),corlog(dens[subsetV],calls[subsetV])),
-                            length=c(corlog(dens[subset],length[subset]),corlog(dens[subsetC],length[subsetC]),corlog(dens[subsetV],length[subsetV]))
-)
 
 ######################################
 ##### Monthly R² for call length #####
@@ -156,7 +130,7 @@ res_cor_dens1 <- data.frame(type=c("All","Cities","Villages"),
 
 
 for(i in monthslist){
-  assign(i,avg_voronoi_ref_NA(get(paste("grid_Sptv_t",i,sep="_")),ref2)[[2]])
+  assign(i,avg_voronoi_ref_NA(get(paste("grid_Sptv_t",i,sep="_")),ref)[[2]])
 }
 
 jan[which(jan == 0)] <- 1
@@ -272,7 +246,8 @@ multiplot(ggg4,ggg7,ggg5,ggg8,ggg6,ggg9,cols=3)
 ##### Plots Night vs Mobile #####
 #################################
 
-subset <- which(dens2 > 0)
+
+subset <- which(dens > 0)
 
 temp <- glm(night[subset] ~ log(dens2[subset]) + log(length[subset]),family = poisson(link = "log"),na.action = na.exclude)
 temp <- glm(night[subset] ~ log(dens[subset]) + log(texts[subset]),family = poisson(link = "log"),na.action = na.exclude)
@@ -294,7 +269,6 @@ plot(1:length(night),
 )
 lines(c(0,1300),c(0,0),lwd=2,col=2)
 points(1:length(night),night-exp(temp$coefficients[1])*dens2^temp$coefficients[2]*length^temp$coefficients[3],col=alpha(1, 0.3),pch=20)
-
 
 fit <- lm(log(exp(temp$coefficients[1])*dens[subset]^temp$coefficients[2]*length[subset]^temp$coefficients[3]) ~ log(night[subset]))
 x <- seq(log(0.015),log(63),by=0.01)
@@ -323,8 +297,6 @@ plot(night,
 lines(0:63,0:63,col=2,lwd=2)
 points(night,exp(temp$coefficients[1])*dens2^temp$coefficients[2]*length^temp$coefficients[3],col=alpha(1, 0.3),pch=20)
 
-
-
 predicted <- exp(temp$coefficients[1])*dens^temp$coefficients[2]*texts^temp$coefficients[3]
 predicted <- exp(temp$coefficients[1])*dens^temp$coefficients[2]*length^temp$coefficients[3]
 
@@ -336,25 +308,15 @@ predicted[which(predicted>63)] <- 63
 
 cor(predicted,night)^2
 
-0.860313
-0.8880523
-
 cor(predicted[subset],night[subset])^2
 cor(predicted[subsetC],night[subsetC])^2
 cor(predicted[subsetV],night[subsetV])^2
-
-length(night)
-length(subsetC)+length(subsetV)
-length(predicted)
 
 predictP <- function(x,y){
   return(exp(temp$coefficients[1])*x^temp$coefficients[2]*y^temp$coefficients[3])
 }
 
-
-
 write.table(table,"table.csv",sep=",",row.names = F)
-
 
 table <- data.frame(night=predicted[subset],dens=dens2[subset],calls=calls[subset])
 table <- as.matrix(table)
@@ -363,7 +325,6 @@ write.table(table,"table2.csv",sep=",",row.names = F)
 table <- data.frame(night=night,dens=dens2,calls=calls)
 table <- as.matrix(table)
 write.table(table,"table3.csv",sep=",",row.names = F)
-
 
 table <- data.frame(Id=1:1298,long=vor_data$l,lat,dens,nightlight,Ntexts,Ncalls,length)
 
@@ -387,131 +348,6 @@ mypanel <- function(x,y,z,z2,...) {
 }
 wireframe(z ~ x * y, data=myGrid, xlab="X", ylab="Y", zlab="Z",
           panel=mypanel, z2=myGrid$z2)
-
-
-
-###################################################
-##### Suggested electrification rate increase #####
-###################################################
-
-
-cor(night,adHoc(night,length)[[1]])^2
-cor(night,adHoc(night,calls)[[1]])^2
-cor(night,adHoc(night,dens)[[1]])^2
-
-cor(night[subsetC],adHoc(night[subsetC],length[subsetC])[[1]])^2
-cor(night[subsetC],adHoc(night[subsetC],calls[subsetC])[[1]])^2
-cor(night[subsetC],adHoc(night[subsetC],dens[subsetC])[[1]])^2
-
-cor(night[subsetV],adHoc(night[subsetV],length[subsetV])[[1]])^2
-cor(night[subsetV],adHoc(night[subsetV],calls[subsetV])[[1]])^2
-cor(night[subsetV],adHoc(night[subsetV],dens[subsetV])[[1]])^2
-
-# Night deduced from Elec x Dens
-nightest <- adHoc(night,elec*dens)[[1]]
-coefreg <- adHoc(night,elec*dens)[[2]]
-
-plot(night,nightest,pch="",ylab="night(elec*dens)")
-lines(c(0,63),c(0,63),lwd=2,col=2)
-points(night,nightest,pch=20,col=alpha(1,0.4))
-text(7,77,paste("Pears=",round(cor(nightest,night,method="pearson"),2),sep=""))
-text(7,66,paste("Spear=",round(cor(nightest,night,method="spearman"),2),sep=""))
-
-####
-
-elecest <- adHoc(elec*dens,night)[[1]]
-coefreg2 <- adHoc(elec*dens,night)[[2]]
-
-plot(elec*dens,elecest)
-lines(c(0,50000),c(0,50000),col=2)
-
-plot(elec,elecest/dens,ylim=c(0,1))
-lines(c(0,50000),c(0,50000),col=2)
-
-elecback <- round(exp(log((nightest-coefreg[2])/coefreg[1])/coefreg[3])/dens,2)
-elecback <- round(exp(log((night-coefreg[2])/coefreg[1])/coefreg[3])/dens,2)
-
-plot(night,nightest)
-lines(c(0,63),c(0,63),col=2)
-
-plot(elec*dens,elecback,ylim=c(0,1))
-lines(c(0,1),c(0,1),col=2)
-
-# Night from Calls
-temp <- adHoc(night,calls)[[1]]
-temp <- adHoc(night,length)[[1]]
-
-plot(night,temp,pch="",ylab="night(calls)")
-lines(c(0,63),c(0,63),lwd=2,col=2)
-points(night,temp,pch=20,col=alpha(1,0.4))
-text(7,77,paste("Pears=",round(cor(temp,night,method="pearson"),2),sep=""))
-text(7,66,paste("Spear=",round(cor(temp,night,method="spearman"),2),sep=""))
-
-final <- round(exp(log((temp-coefreg[2])/coefreg[1])/coefreg[3])/dens,2)
-final2 <- pmax(elec,final)
-final3 <- pmin(rep(1,length(final)),final2)
-diff <- final3-elec
-
-plot(night,nightest)
-plot(elec,temp2)
-
-temp2 <- round(exp(log((nightest-coefreg[2])/coefreg[1])/coefreg[3])/dens,2)
-diff2 <- final-temp2
-diff2 <- pmax(0,diff2)
-rdiff2 <- (final+diff2)/final
-
-felec <- pmin(rep(1,length(final)),elec*rdiff2)
-
-plot(1:length(diff),temp2)
-plot(1:length(diff),final3)
-
-plot(1:length(diff),diff2)
-plot(1:length(diff),rdiff2)
-plot(1:length(diff),felec)
-
-plot(1:length(diff),diff)
-points(1:length(diff),diff2,col=2)
-
-plot(1:length(diff),diff,ylim=c(0,1),pch=20,col=alpha(1,0.4),xlab="Tower",ylab="Suggested elec. increase",cex=0.5,main="Calls alone")
-plot(1:length(diff),final3,ylim=c(0,1),pch=20,col=alpha(1,0.4),xlab="Tower",ylab="Final elec. rate",cex=0.5,main="Calls alone")
-
-# Night from Dens + Calls
-subset <- which(night>0 & dens>0 & calls>0)
-temp2 <- glm(night[subset] ~ log(dens[subset]) + log(calls[subset]),family = poisson(link = "log"),na.action = na.exclude)
-temp <- exp(temp2$coefficients[1])*dens^temp2$coefficients[2]*calls^temp2$coefficients[3]
-
-final <- round(exp(log((temp-coefreg[2])/coefreg[1])/coefreg[3])/dens,2)
-final2 <- pmax(elec,final)
-final3 <- pmin(rep(1,length(final)),final2)
-diff <- final3-elec
-
-plot(1:length(diff),diff,ylim=c(0,1),pch=20,col=alpha(1,0.4),xlab="Tower",ylab="Suggested elec. increase",cex=0.5,main="Dens+Calls")
-plot(1:length(diff),final3,ylim=c(0,1),pch=20,col=alpha(1,0.4),xlab="Tower",ylab="Final elec. rate",cex=0.5,main="Dens+Calls")
-
-# Villages only
-nightest <- adHoc(night[subsetV],elec[subsetV]*dens[subsetV])[[1]]
-coefreg <- adHoc(night[subsetV],elec[subsetV]*dens[subsetV])[[2]]
-
-plot(night[subsetV],nightest,pch="")
-lines(c(0,64),c(0,64),lwd=2,col=2)
-points(night[subsetV],nightest,pch=20,col=alpha(1,0.4))
-text(7,57,paste("Pears=",round(cor(nightest,night[subsetV],method="pearson"),2),sep=""))
-text(7,50,paste("Spear=",round(cor(nightest,night[subsetV],method="spearman"),2),sep=""))
-
-temp <- adHoc(night[subsetV],calls[subsetV])[[1]]
-
-final <- round(exp(log((temp-coefreg[2])/coefreg[1])/coefreg[3])/dens[subsetV],2)
-final2 <- pmax(elec[subsetV],final)
-final3 <- pmin(rep(1,length(final)),final2)
-diff <- final3-elec[subsetV]
-
-plot(subsetV,diff,ylim=c(0,1),pch=20,col=alpha(1,0.4),xlab="Tower",ylab="Suggested elec. increase",cex=0.5,main="Calls alone (villages)")
-plot(subsetV,elec[subsetV],ylim=c(0,1),pch=20,col=alpha(2,0.4),xlab="Tower",ylab="Final elec. rate",cex=0.5,main="Calls alone (villages)")
-points(subsetV,final3,ylim=c(0,1),pch=20,col=alpha(1,0.4),xlab="Tower",ylab="Final elec. rate",cex=0.5,main="Calls alone (villages)")
-for(i in 1:length(subsetV)){
-  lines(c(subsetV[i],subsetV[i]),c(final3[i],elec[subsetV[i]]),lty=3,lwd=0.5)
-}
-legend("bottomleft",c("old","new"),col=c(2,1),pch=c(20,20),pt.cex=c(0.5,0.5))
 
 
 ###################################################
@@ -679,9 +515,10 @@ plot(1:length(night),estimate3-night,pch="",col=alpha(1,0.4),xlab="Tower Id",yla
 lines(c(0,1300),c(0,0),lwd=2,col=2)
 points(1:length(night),estimate3-night,pch=20,col=alpha(1,0.4))
 
-###############################################################
-##### Pearson/box aggregation: influence of the unit size #####
-###############################################################
+
+#####################################################################
+##### Test: Pearson/box aggregation: influence of the unit size #####
+#####################################################################
 
 
 multp <- c(1:50)
@@ -704,7 +541,3 @@ lines(1:50,res_pearson_agg$v_n)
 points(1:50,res_pearson_agg$v_t,pch=16,xlab="Grid size",ylab="Pearson",main="Call length",col=palette[2])
 lines(1:50,res_pearson_agg$v_t)
 legend("bottomright",c("Text messages","# Call","Total call length"),pch=c(18,15,16),col=c(1,palette[5],palette[2]))
-
-
-
-
