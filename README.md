@@ -11,7 +11,12 @@ Only the content of the repository is described here, for a description of the m
 Some of the public and non sensitive data are stored on OSF. The rest can only be accessed by requesting permission from Orange/Sonatel.
 
 Data provided on OSF:
-- ...
+- `individus.csv` and `habitat.csv` are extracts from the 2013 Census in Senegal.
+- `Senegal_Communes_552.shp` is a shapefile of Senegal according to the official division into 552 communes from December 2013.
+- `popelec.csv` contains population density and electrification rates at Commune level estimated from the Census by Georges Vivien Houngbonon (ghoungbonon@ifc.org).
+- `S1_File.csv` - Supplementary data given with the article containing general information (population density, nighttime light intensity, mobile phone activity) aggregated at Voronoi neighbourhood level around each antenna site (1666 sites).
+- `S2_File.csv` - Identical to previous file but at Commune level (552 COmmune level).
+- `S3_File.csv` - Supplementary data given with the article containing a time series at active antenna sites (1298 active sites out of 1666) for January 2013. Can be use to test the clustering methods.
 
 Data not provided:
 - Localisation of the antenna sites.
