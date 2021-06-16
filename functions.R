@@ -1,9 +1,19 @@
+# Most of the functions in this sheet are ad-hoc variants of usual functions created to have more control over hidden details when trying different methods.
+# The actual clustering algorithm used in the article corresponds to the last section: AutoClustering
+
+
 ################
 ### Gridding ###
 ################
 
 
+# This section contains utility functions to ready data for rasterisation.
+#   <country> is a bounding box around the studied area
+#   <holes> are pixels that are known to not be land officially belonging to the Country (e.g. Ocean, Gambia)
+# These were later replaced by tools taken directly from the R raster package
+
 griddingNation <- function(X,Y,Z,country,holes = NULL,fun="mean"){
+  # X and Y are vectors of coordinates, Z is a vecotr of values at these coordinates
   # "country" must be a vector containing: (minLong,maxLong,minLat,maxLat,resX,resY)
   # resX/resY is expressed as the number of cells contained in the grid
   l <- length(X)
@@ -23,6 +33,7 @@ griddingNation <- function(X,Y,Z,country,holes = NULL,fun="mean"){
   return(result)
 }
 
+# In principle deprecated
 randtoGrid <- function(X,Y,Z,MX,MY,fun)
   # X: 1st coord, Y: 2nd coord, Z: values, 
   # MX = c(min,max,nbr of X intervals), MY=c(min,max,nbr of Y intervals)
@@ -51,7 +62,7 @@ randtoGrid <- function(X,Y,Z,MX,MY,fun)
   return(result)
 }
 
-# Griding the data: fixed boundaries
+# Griding the data: fixed boundaries; in principle deprecated
 newrandtoGrid <- function(X,Y,Z,MX,MY,fun){
   # X: 1st coord, Y: 2nd coord, Z: values, 
   # MX = nbr of X intervals, MY = nbr of Y intervals
@@ -81,6 +92,7 @@ newrandtoGrid <- function(X,Y,Z,MX,MY,fun){
   return(result)
 }
 
+# Deprecated function to aggregate spatially.
 GridingAgg <- function(InitGrid,multp,startpos=1)
   # 'multp' is a vector containing the new grid unit sizes as multiples of the initial unit size
   # 'startpos' indicates from which corner to start (counted clockwise)
@@ -116,6 +128,9 @@ GridingAgg <- function(InitGrid,multp,startpos=1)
 ########################
 ### Data preparation ###
 ########################
+
+
+# Likely deprecated functions to load and apply basic preparation to the data
 
 monthlyText <- function(i,folderin){
   ref <- data.frame(tower=1:1666)
@@ -169,7 +184,8 @@ hourlyVoice <- function(i,folderin){
 ### Plotting ###
 ################
 
-
+  
+# Function to plot several ggplots side by side
 multiplot <- function(...,plotlist=NULL,file,cols=1,layout=NULL) {
   library(grid)
   plots <- c(list(...),plotlist)
@@ -191,6 +207,7 @@ multiplot <- function(...,plotlist=NULL,file,cols=1,layout=NULL) {
   }
 }
 
+# Function to visualise matrices, useful to do color plots of correlation matrices
 plotgrid <- function(grid,log=F){
   meltedgrid <- melt(grid)
   if(log==T){
@@ -205,6 +222,8 @@ plotgrid <- function(grid,log=F){
 ### Voronoi ###
 ###############
 
+
+# Simple definition of voronoi neighbourhood
 voronoi <- function(i,j,ref){
   d <- sqrt((ref[,1]-i)^2+(ref[,2]-j)^2)
   return(c(which.min(d),ref[which.min(d),]))
@@ -230,7 +249,7 @@ avg_voronoi <- function(grid){
   return(result)
 }
 
-# [Aggregation:] voronoi compared to ref
+# [Aggregation:] voronoi compared to ref of centres
 avg_voronoi_ref <- function(grid,ref){
   result <- matrix(0,nrow=nrow(grid),ncol=ncol(grid))
   whichm <- matrix(0,nrow=nrow(grid),ncol=ncol(grid))
@@ -251,7 +270,7 @@ avg_voronoi_ref <- function(grid,ref){
   return(list(result,meanr))
 }
 
-# [Aggregation:] voronoi compared to ref
+# [Aggregation:] voronoi compared to ref of centres that defaults to NA instead of 0 when no value is found
 avg_voronoi_ref_NA <- function(grid,ref){
   result <- matrix(NA,nrow=nrow(grid),ncol=ncol(grid))
   whichm <- matrix(0,nrow=nrow(grid),ncol=ncol(grid))
@@ -279,10 +298,14 @@ avg_voronoi_ref_NA <- function(grid,ref){
   return(list(result,meanr,sumr,countr))
 }
 
+
 #######################
 ##### Correlation #####
 #######################
 
+  
+ # Simple automation of Poisson fittings and R^2 computation
+  
 pearson <- function(D1,D2){
   a1 <- mean(D1)
   a2 <- mean(D2)
@@ -297,6 +320,7 @@ rsq <- function(a,b,subset=1:length(a),l=1){
   }
 }
 
+# Poisson fittings adapted to the data
 rsqP <- function(a,b,c=NULL,subset=1:length(a)){
   if(!is.null(c)){
     temp <- glm(a[subset] ~ log(b[subset]) + log(c[subset]),family = poisson(link = "log"),na.action = na.exclude)
@@ -307,6 +331,7 @@ rsqP <- function(a,b,c=NULL,subset=1:length(a)){
   }
 }
 
+# Linear fittings adapted to the data
 rsqL <- function(a,b,c=NULL,subset=1:length(a)){
   temp <- lm(log(a[subset]) ~ log(b[subset]) + log(c[subset]),na.action = na.exclude)
   rsq(a,exp(temp$coefficients[1])*b^temp$coefficients[2]*c^temp$coefficients[3])
@@ -329,6 +354,9 @@ adHoc <- function(aa,bb,m=100,by=0.01){
 #########################
 ##### Multifractals #####
 #########################
+
+
+# Used only for side projects
 
 boxCounting <- function(M,S)
 {
@@ -457,6 +485,9 @@ MMoment_MGBox <- function(grid,sizes,q,dd,neigh=1)
 ######################
 
 
+# Custom functions to create distance matrices
+
+# Based on Sd of the difference between two curves
 distMatSd <- function(df){
   l <- nrow(df)
   m <- matrix(0,nrow=l,ncol=l)
@@ -472,6 +503,7 @@ distMatSd <- function(df){
   return(m)
 }
 
+# Based on direct correlation between two curves (point by point)
 distMatCor <- function(df){
   l <- nrow(df)
   m <- matrix(0,nrow=l,ncol=l)
@@ -487,6 +519,7 @@ distMatCor <- function(df){
   return(m)
 }
 
+# Likely deprecated; for testing only  
 customClust <- function(df,num){
   l <- nrow(df)
   m <- matrix(0,nrow=l,ncol=l)
@@ -517,9 +550,13 @@ customClust <- function(df,num){
   return(result)
 }
 
+  
 ##########################################
 ##### Variable coefficients analysis #####
 ##########################################
+
+
+# Only useful for side projects
 
 bin <- function(data,n){
   vect <- rep(list(NULL),n)
@@ -571,11 +608,14 @@ multidensAnalysis2 <- function(n){
   estimate2 <- dens^(fit2$coefficients[1]+dens*fit2$coefficients[2])
   return(cor(night,estimate2)^2)
 }
-  
+
+
 ######################################
 ##### Distance Matrix Clustering #####
 ######################################
 
+
+# Updated functions to create distance matrices, see above
 
 distMatSd <- function(df){
   l <- nrow(df)
@@ -641,11 +681,14 @@ distMatCorNA <- function(df,n){
   return(1-m)
 }
 
+  
 ##############################
 ##### Network Clustering #####
 ##############################
   
 
+# creates a feature table to apply clustering (useful for network clustering). See article to identify all the features used.
+  
 clustFeat <- function(G,t,dist){
   # G is the original graph.
   # t is the edge threshold(s) to build subgraph. Please start with 0 to include the original graph.
@@ -709,7 +752,9 @@ radian.rescale <- function(x, start=0, direction=1) {
 ##########################
 ##### Autoclustering #####
 ##########################
-  
+
+
+# These functions are meant to apply autoimatically the purity-based method of clustering (see SI)
   
 # Functions:
 # autoClust(data,var,t,comp = NULL,method.clust = 'complete',method.purity = 'bins')
@@ -731,14 +776,6 @@ radian.rescale <- function(x, start=0, direction=1) {
 # <dist> Type of distance matrix: "Sd" or "Cor"
 # <time> Length of considered period: 'D', 'W' or 'Y'
 # <unit> Tower ('T') or Voronoi cell ('V'). Currently, only Voronoi is supported.
-
-
-
-#######
-####### Functions
-#######
-
-
 
 # Cluster purity based on bins
 ispure1 <- function(dend,var,comp,t){
@@ -784,25 +821,21 @@ autoClust <- function(data,var,t,comp = NULL,method.clust = 'complete',method.pu
   }
 }
 
-##### New dens
-nameClust <- function(mpd,t,comp = NULL,dist = 'Sd',time = 'D',unit = "V",var = 'dens',method.clust = 'complete',method.purity = 'bins'){
-  data <- read.csv(file = paste("Data/z_dMat_",time,dist,"_",mpd,"_",unit,".csv",sep=""),header = F)
-  data <- as.matrix(data)
-  colnames(data) <- 1:nrow(data)
-  if(var == 'dens' & unit == 'V'){
-    var <- vorData$dens
-  }else if(var == 'night' & unit == 'V'){
-    var <- vorData$nightlight
-  }else if(var == 'dens' & unit == 'T'){
-    var <- densV
-  }else if(var == 'night' & unit == 'T'){
-    var <- elecV
-  }
-  return(autoClust(data,var,t,comp,method.clust,method.purity))
+#nameClust <- function(mpd,t,comp = NULL,dist = 'Sd',time = 'D',unit = "V",var = 'dens',method.clust = 'complete',method.purity = 'bins'){
+#  data <- read.csv(file = paste("Data/z_dMat_",time,dist,"_",mpd,"_",unit,".csv",sep=""),header = F)
+#  data <- as.matrix(data)
+#  colnames(data) <- 1:nrow(data)
+#  if(var == 'dens' & unit == 'V'){
+#   var <- vorData$dens
+#  }else if(var == 'night' & unit == 'V'){
+#    var <- vorData$nightlight
+#  }else if(var == 'dens' & unit == 'T'){
+#    var <- densV
+#  }else if(var == 'night' & unit == 'T'){
+#    var <- elecV
+#  }
+#  return(autoClust(data,var,t,comp,method.clust,method.purity))
 }
-
-
-#####
 
 
 # From names to clustered
@@ -894,12 +927,6 @@ autoExpctdFeatP <- function(mpd,t,frame,comp,unit = "V",var = 'dens',method.clus
   }
   return(frame)
 }
-
-N = 1
-frame = clustExpectedDens
-var='night',unit="")
-
-range(nightV)
 
 autoExpctdFeatNetP <- function(N,t,frame,comp,unit = "T",var = 'dens',method.clust = 'complete',method.purity = 'bins'){
   data <- read.csv(file = paste("Data/featureNetSub",unit,as.character(N),".csv",sep=""),header=F)
