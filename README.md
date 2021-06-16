@@ -1,6 +1,6 @@
 # pop-dens-elec-clustering-method
 
-This repository contains the supporting code for the article: Salat, Smoreda, Schläpfer, [A method to estimate population densities and electricity consumption from mobile phone data in developing countries. PLoS One, 2020. DOI: 10.1371/journal.pone.0235224](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0235224)
+This repository contains the supporting code for the article: [Salat, Smoreda, Schläpfer, A method to estimate population densities and electricity consumption from mobile phone data in developing countries. PLoS One, 2020. DOI: 10.1371/journal.pone.0235224](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0235224)
 
 The project is meant to be used as a single workspace (variables created in one file are called directly from other files).
 
