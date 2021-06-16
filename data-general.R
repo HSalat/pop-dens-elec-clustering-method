@@ -1,16 +1,15 @@
 library(rgdal)
 
-source(functions.R)
 
 ### Required data:
 ###   <individus.csv> and <habitat.csv> are extracts from the 2013 Census, see data section of the general documentation
 ###   <Senegal_Communes_552.shp> is a shapefile of Senegal at Commune level (522 entities according to the post DEC 2013 definitions)
-###   <popelec.csv> contains population density and electrification rates at Commune level estimated by Georges Vivien Houngbonon (ghoungbonon@ifc.org)
+###   <popelec.csv> contains population density and electrification rates at Commune level estimated from the Census by Georges Vivien Houngbonon (ghoungbonon@ifc.org)
 ###   <SITE_ARR_LONLAT.csv> contains coordinates of all antenna sites in Senegal. Request access from Orange/Sonatel
 
 
 
-
+folderin <- "data/"
 
 gridSenegal <- c(-17.54319,-11.34247,12.30786,16.69207,744,527) # coordinates of a bounding box around Senegal
 holesSenegal <- which(is.na(grid_senComPop)) # reference of empty spaces (e.g. Sea, different Country)
