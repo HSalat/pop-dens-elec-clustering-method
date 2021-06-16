@@ -29,4 +29,4 @@ Data not provided:
 - `functions.R` groups a number of utility functions to prepare the data and create visualisations. Most are ad-hoc variants of usual functions created to have more control over hidden details when trying different methods or simply adapted to the specific situation. An automated version of the purity-based clustering is presented at the end. The main clustering method is not automated and must be operated using `results-clustering.R`.
 - `results-correlations-table1.R` contains the code to compute Table 1 of the article (up to l. 128) and some visualisations, additional tests and interesting alternatives methods that were not included in the final article.
 
-The data loaded by `Data-general.R` is essential to run all other files.
+The data loaded by `data-general.R` is essential to run all other files.
