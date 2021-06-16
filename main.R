@@ -1,5 +1,7 @@
 library(rgdal)
 
+source(functions.R)
+
 
 ### Data required:
 ###   <Senegal_Communes_552.shp> is a shapefile of Senegal at Commune level (522 entities according to the post DEC 2013 definitions)
