@@ -3,16 +3,16 @@
 ###   <SET1V_XX> are a series of Call Details Record (CDR) for calls in Senegal in 2013 operated by Sonatel, sorted by month. Access needs to be requested from Orange/Sonatel.
 
 
-folderin <- "data/"
-
-
 ########################################
 ##### Prepared data for clustering #####
 ########################################
 
 
 # data averaged per antenna site
+
 ref <- data.frame(vorId=towerloc$tvId,towId=towerloc$tId)
+# Allows selection between all antenna sites (towId, 1666 entities) or active antenna sites (vorId, 1298 entities).
+# Comment out accordingly in the lines below. Most recent analyses use active antenna sites (vorId).
 
 # Texts
 i=1
