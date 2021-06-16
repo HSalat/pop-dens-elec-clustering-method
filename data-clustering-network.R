@@ -11,11 +11,11 @@ library(igraph)
 
 
 # Data building
-#ref <- data.frame(vorId=towerloc$tvId,towId=towerloc$tId) # Was used before scale was definitely set to Voronoi level
+#ref <- data.frame(vorId=towerloc$tvId,towId=towerloc$tId) # was used before the scale was definitively set to Voronoi level
 
 # Texts
 i=1
-dataN <- read.csv(paste(folderin,"Sonatel/SET1/SET1S_",i,".csv",sep=""),header = F)
+dataN <- read.csv(paste(folderin,"SET1/SET1S_",i,".csv",sep=""),header = F)
 dataN <- aggregate(V4~V2+V3, dataN, sum)
 #dataN <- merge(dataN,ref,by.x="V2",by.y="towId",all.x = T)
 #dataN <- dataN[which(!is.na(dataN$vorId)),]
@@ -25,7 +25,7 @@ dataN <- data.frame(O=dataN$V2,D=dataN$V3,N=dataN$V4)
 #dataN <- data.frame(O=dataN$O,D=dataN$vorId,N=dataN$N)
 dataN <- aggregate(N~O+D, dataN, sum)
 for(i in 2:12){
-  temp <- read.csv(paste(folderin,"Sonatel/SET1/SET1S_",i,".csv",sep=""),header = F)
+  temp <- read.csv(paste(folderin,"SET1/SET1S_",i,".csv",sep=""),header = F)
   temp <- aggregate(V4~V2+V3, temp, sum)
 #  temp <- merge(temp,ref,by.x="V2",by.y="towId",all.x = T)
 #  temp <- temp[which(!is.na(temp$vorId)),]
@@ -40,7 +40,7 @@ for(i in 2:12){
 
 # Calls
 i=1
-dataNV <- read.csv(paste(folderin,"Sonatel/SET1/SET1V_",i,".csv",sep=""),header = F)
+dataNV <- read.csv(paste(folderin,"SET1/SET1V_",i,".csv",sep=""),header = F)
 dataNV <- aggregate(V4~V2+V3, dataNV, sum)
 #dataNV <- merge(dataNV,ref,by.x="V2",by.y="towId",all.x = T)
 #dataNV <- dataNV[which(!is.na(dataNV$vorId)),]
@@ -50,7 +50,7 @@ dataNV <- data.frame(O=dataNV$V2,D=dataNV$V3,N=dataNV$V4)
 #dataNV <- data.frame(O=dataNV$O,D=dataNV$vorId,N=dataNV$N)
 dataNV <- aggregate(N~O+D, dataNV, sum)
 for(i in 2:12){
-  temp <- read.csv(paste(folderin,"Sonatel/SET1/SET1V_",i,".csv",sep=""),header = F)
+  temp <- read.csv(paste(folderin,"SET1/SET1V_",i,".csv",sep=""),header = F)
   temp <- aggregate(V4~V2+V3, temp, sum)
 #  temp <- merge(temp,ref,by.x="V2",by.y="towId",all.x = T)
 #  temp <- temp[which(!is.na(temp$vorId)),]
@@ -65,7 +65,7 @@ for(i in 2:12){
 
 # Call lenghts
 i=1
-dataNL <- read.csv(paste(folderin,"Sonatel/SET1/SET1V_",i,".csv",sep=""),header = F)
+dataNL <- read.csv(paste(folderin,"SET1/SET1V_",i,".csv",sep=""),header = F)
 dataNL <- aggregate(V5~V2+V3, dataNL, sum)
 #dataNL <- merge(dataNL,ref,by.x="V2",by.y="towId",all.x = T)
 #dataNL <- dataNL[which(!is.na(dataNL$vorId)),]
@@ -75,7 +75,7 @@ dataNL <- data.frame(O=dataNL$V2,D=dataNL$V3,N=dataNL$V5)
 #dataNL <- data.frame(O=dataNL$O,D=dataNL$vorId,N=dataNL$N)
 dataNL <- aggregate(N~O+D, dataNL, sum)
 for(i in 2:12){
-  temp <- read.csv(paste(folderin,"Sonatel/SET1/SET1V_",i,".csv",sep=""),header = F)
+  temp <- read.csv(paste(folderin,"SET1/SET1V_",i,".csv",sep=""),header = F)
   temp <- aggregate(V5~V2+V3, temp, sum)
 #  temp <- merge(temp,ref,by.x="V2",by.y="towId",all.x = T)
 #  temp <- temp[which(!is.na(temp$vorId)),]
@@ -130,9 +130,9 @@ write.table(dataNL,"dataNL.csv")
 ##################################################
 
 
-dataN <- read.csv("dataN.csv",sep=" ")
-dataNV <- read.csv("dataNV.csv",sep=" ")
-dataNL <- read.csv("dataNL.csv",sep=" ")
+#dataN <- read.csv("dataN.csv",sep=" ")
+#dataNV <- read.csv("dataNV.csv",sep=" ")
+#dataNL <- read.csv("dataNL.csv",sep=" ")
 
 netT <- matrix(0,nrow=1666,ncol=1666)
 for(i in 1:nrow(dataN)){
