@@ -1,5 +1,7 @@
 library(rgdal)
 
+source(functions.R)
+
 ### Required data:
 ###   <individus.csv> and <habitat.csv> are extracts from the 2013 Census, see data section of the general documentation
 ###   <Senegal_Communes_552.shp> is a shapefile of Senegal at Commune level (522 entities according to the post DEC 2013 definitions)
