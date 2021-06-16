@@ -44,9 +44,6 @@ plot(senCommune,add=T) # boundaries
 
 
 
-
-
-
 vor_data$dens2 <- avg_voronoi_ref_NA(grid_senComPop,ref2)[[2]]
 dens2 <- vor_data$dens2
 
@@ -56,34 +53,6 @@ subset <- setdiff(subset,which(dens2 == 0))
 subsetC2 <- intersect(subset,which(vor_data$dens2 > 5000)) # outdated definition of cities (reduced to 1000 in later work)
 subsetV2 <- intersect(subset,which(vor_data$dens2 <= 5000)) # outdated definition of rural villages
 
-cor(dens2,night)^2
-cor(dens2,texts)^2
-cor(dens2,calls)^2
-cor(dens2,length)^2
-cor(log(dens2[subset]),log(night[subset]))^2
-cor(log(dens2[subset]),log(texts[subset]))^2
-cor(log(dens2[subset]),log(calls[subset]))^2
-cor(log(dens2[subset]),log(length[subset]))^2
-cor(dens2[subsetC2],texts[subsetC2])^2
-cor(dens2[subsetC2],calls[subsetC2])^2
-cor(dens2[subsetC2],length[subsetC2])^2
-cor(dens2[subsetC2],night[subsetC2])^2
-cor(dens2[subsetV2],night[subsetV2])^2
-cor(dens2[subsetV2],texts[subsetV2])^2
-cor(dens2[subsetV2],calls[subsetV2])^2
-cor(dens2[subsetV2],length[subsetV2])^2
-cor(night,texts)^2
-cor(night,calls)^2
-cor(night,length)^2
-cor(night[subsetC2],texts[subsetC2])^2
-cor(night[subsetC2],calls[subsetC2])^2
-cor(night[subsetC2],length[subsetC2])^2
-cor(night[subsetV2],texts[subsetV2])^2
-cor(night[subsetV2],calls[subsetV2])^2
-cor(night[subsetV2],length[subsetV2])^2
-
-rsqP(night,texts,dens2,subset)
-rsqP(night,texts,dens,subset)
 
 
 temp <- glm(night[subset] ~ log(texts[subset]) + log(dens[subset]),family = poisson(link = "log"),na.action = na.exclude)
