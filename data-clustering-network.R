@@ -11,7 +11,10 @@ library(igraph)
 
 
 # Data building
-#ref <- data.frame(vorId=towerloc$tvId,towId=towerloc$tId) # was used before the scale was definitively set to Voronoi level
+
+ref <- data.frame(vorId=towerloc$tvId,towId=towerloc$tId)
+# Allows selection between all antenna sites (towId, 1666 entities) or active antenna sites (vorId, 1298 entities).
+# Comment out accordingly in the lines below. Most recent analyses use active antenna sites (vorId).
 
 # Texts
 i=1
@@ -88,9 +91,13 @@ for(i in 2:12){
   dataNL <- aggregate(N~O+D, dataNL, sum)
 }
 
+#write.table(dataN,"dataN.csv")
+#write.table(dataNV,"dataNV.csv")
+#write.table(dataNL,"dataNL.csv")
 
 # Visualisations
-netT <- matrix(0,nrow=1298,ncol=1298)
+
+netT <- matrix(0,nrow=1298,ncol=1298) # Compatible with vorId only
 for(i in 1:nrow(dataN)){
   netT[dataN$O[i],dataN$D[i]] <- dataN$N[i]
 }
@@ -120,19 +127,13 @@ plot(G_T_sub_2, layout=lay, vertex.size=1, vertex.shape="none",
      vertex.label="",
      edge.arrow.size=0.1)
 
-write.table(dataN,"dataN.csv")
-write.table(dataNV,"dataNV.csv")
-write.table(dataNL,"dataNL.csv")
-
 
 ##################################################
 ##### Clustering features (partial networks) #####
 ##################################################
 
 
-#dataN <- read.csv("dataN.csv",sep=" ")
-#dataNV <- read.csv("dataNV.csv",sep=" ")
-#dataNL <- read.csv("dataNL.csv",sep=" ")
+# Compatible with towId only
 
 netT <- matrix(0,nrow=1666,ncol=1666)
 for(i in 1:nrow(dataN)){
