@@ -14,6 +14,7 @@ folderin <- "data/"
 # data averaged per antenna site
 ref <- data.frame(vorId=towerloc$tvId,towId=towerloc$tId)
 
+# Texts
 i=1
 data <- read.csv(paste(folderin,"SET1/SET1S_",i,".csv",sep=""),header = F)
 data <- aggregate(V4~V1+V2, data, sum)
@@ -24,6 +25,7 @@ for(i in 2:12){
 }
 data <- merge(data,ref,by.x="V2",by.y="towId",all.x = T)
 
+# Calls
 i=1
 dataV <- read.csv(paste(folderin,"SET1/SET1V_",i,".csv",sep=""),header = F)
 dataV <- aggregate(V4~V1+V2, dataV, sum)
@@ -34,6 +36,7 @@ for(i in 2:12){
 }
 dataV <- merge(dataV,ref,by.x="V2",by.y="towId",all.x = T)
 
+# Call lengths
 i=1
 dataL <- read.csv(paste(folderin,"SET1/SET1V_",i,".csv",sep=""),header = F)
 dataL <- aggregate(V5~V1+V2, dataL, sum)
