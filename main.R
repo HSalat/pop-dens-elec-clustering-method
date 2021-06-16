@@ -1,19 +1,19 @@
 library(rgdal)
 
 source(functions.R)
+source(data-general.R)
+
+attach(vor_data)
 
 
-### Data required:
-###   <Senegal_Communes_552.shp> is a shapefile of Senegal at Commune level (522 entities according to the post DEC 2013 definitions)
+### Required data:
+
 ###   <comData.csv> data frame with population density and nighttime lights intensity at Commune level
 ###   <vorData.csv> same information as <comData.csv> at Voronoi level around each of the active antenna sites (trimmed to 1298 from 1666 sites) and mobile phone activity
 
 
-# load data
-senCommune <- readOGR("Senegal_Communes_552.shp")
-popelec <- read.csv("popelec.csv")
 vor_data <- read.csv("vorData.csv")
-attach(vor_data)
+
 
 # standardisation of Commune codes
 for(i in 1:552){
