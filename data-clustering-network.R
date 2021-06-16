@@ -11,7 +11,7 @@ library(igraph)
 
 
 # Data building
-ref <- data.frame(vorId=towerloc$tvId,towId=towerloc$tId)
+#ref <- data.frame(vorId=towerloc$tvId,towId=towerloc$tId) # Was used before scale was definitely set to Voronoi level
 
 # Texts
 i=1
