@@ -1,5 +1,9 @@
 library(igraph)
 
+### Required data (same as data-clustering-curves.R):
+###   <SET1S_XX> are a series of Call Details Record (CDR) for text messages in Senegal in 2013 operated by Sonatel, sorted by month. Access needs to be requested from Orange/Sonatel.
+###   <SET1V_XX> are a series of Call Details Record (CDR) for calls in Senegal in 2013 operated by Sonatel, sorted by month. Access needs to be requested from Orange/Sonatel.
+
 
 #################################
 ##### Building the networks #####
@@ -9,6 +13,7 @@ library(igraph)
 # Data building
 ref <- data.frame(vorId=towerloc$tvId,towId=towerloc$tId)
 
+# Texts
 i=1
 dataN <- read.csv(paste(folderin,"Sonatel/SET1/SET1S_",i,".csv",sep=""),header = F)
 dataN <- aggregate(V4~V2+V3, dataN, sum)
@@ -33,6 +38,7 @@ for(i in 2:12){
   dataN <- aggregate(N~O+D, dataN, sum)
 }
 
+# Calls
 i=1
 dataNV <- read.csv(paste(folderin,"Sonatel/SET1/SET1V_",i,".csv",sep=""),header = F)
 dataNV <- aggregate(V4~V2+V3, dataNV, sum)
@@ -57,6 +63,7 @@ for(i in 2:12){
   dataNV <- aggregate(N~O+D, dataNV, sum)
 }
 
+# Call lenghts
 i=1
 dataNL <- read.csv(paste(folderin,"Sonatel/SET1/SET1V_",i,".csv",sep=""),header = F)
 dataNL <- aggregate(V5~V2+V3, dataNL, sum)
@@ -118,10 +125,10 @@ write.table(dataNV,"dataNV.csv")
 write.table(dataNL,"dataNL.csv")
 
 
-
 ##################################################
 ##### Clustering features (partial networks) #####
 ##################################################
+
 
 dataN <- read.csv("dataN.csv",sep=" ")
 dataNV <- read.csv("dataNV.csv",sep=" ")
@@ -145,23 +152,14 @@ for(i in 1:nrow(dataNL)){
 }
 G_TL <- graph_from_adjacency_matrix(netTL,mode="directed",weighted=T)
 
-
 G_test <- subgraph.edges(graph=G_T,eids=which(E(G_T)$weight>10000),delete.vertices=F)
 length(V(G_test))
-
-range(E(G_T)$weight)
-range(E(G_TV)$weight)
-range(E(G_TL)$weight)
 
 hist(E(G_T)$weight[E(G_T)$weight < 500],breaks=20)
 hist(E(G_T)$weight)
 
 hist(E(G_TV)$weight[E(G_TV)$weight < 500],breaks=20)
 hist(E(G_TL)$weight[E(G_TL)$weight < 15000],breaks=20)
-
-length(E(G_T)$weight)
-
-
 
 clustFeat(G_T,c(0,75,150,300,600),dist)
 clustFeat(G_TV,c(0,75,150,300,600),dist)
