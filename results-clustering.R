@@ -1,15 +1,7 @@
 
-
-
-
-
-
-
 #######
 ####### Tests
 #######
-
-
 
 comp <- c(min(towerloc$dens,na.rm=T),500,5000,max(towerloc$dens,na.rm=T))
 t <- c(0.9,0.85,0.85) # 142 Clusters
