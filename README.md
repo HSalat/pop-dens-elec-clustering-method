@@ -21,7 +21,7 @@ Data provided on [OSF](https://osf.io/q29a7/):
 Data not provided:
 - Localisation of the antenna sites (access restricted).
 - Full call details records for the year 2013 in Senegal (access restricted).
-- Nighttime lights intensity data should be downloaded from NOAA directly: https://ngdc.noaa.gov/eog/dmsp/downloadV4composites.html .
+- Nighttime lights intensity data should be downloaded from NOAA directly: https://ngdc.noaa.gov/eog/dmsp/downloadV4composites.html
 
 ## Files
 
