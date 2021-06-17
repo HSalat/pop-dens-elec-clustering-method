@@ -19,8 +19,9 @@ Data provided on [OSF](https://osf.io/q29a7/):
 - `S3_File.csv` - Supplementary data given with the article containing a sample time series at active antenna sites level (1298 active sites out of 1666) for January 2013. It can be used to test the clustering methods.
 
 Data not provided:
-- Localisation of the antenna sites.
-- Full call details records for the year 2013 in Senegal.
+- Localisation of the antenna sites (access restricted).
+- Full call details records for the year 2013 in Senegal (access restricted).
+- Nighttime lights intensity data should be downloaded from NOAA directly: https://ngdc.noaa.gov/eog/dmsp/downloadV4composites.html .
 
 ## Files
 
