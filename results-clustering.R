@@ -1,7 +1,12 @@
+###################################
+##### Purity-based clustering #####
+###################################
 
-#######
-####### Tests
-#######
+
+#####--------------
+##### Initial tests
+#####--------------
+
 
 comp <- c(min(towerloc$dens,na.rm=T),500,5000,max(towerloc$dens,na.rm=T))
 t <- c(0.9,0.85,0.85) # 142 Clusters
@@ -24,12 +29,13 @@ t <- 7000 # 15 Clusters
 nameClust('T',t,method.purity = 'var')
 
 
+#######------------
+####### Predictions
+#######------------
 
-#######
-####### Density predictions
-#######
+##### Tests
 
-densV <- vorData$dens
+densV <- vorData$dens # dens2 variable may be more appropriate depending on the version of the data
 
 densV <- aggregate(towerloc$dens ~ towerloc$tvId, FUN = "mean")
 densV <- densV$`towerloc$dens`
@@ -121,12 +127,6 @@ plot(1:12,cor,ylim=c(0,1))
 plot(1:12,std,ylim=c(0,max(std)))
 #plot(1:12,mn,ylim=c(0,max(mn)))
 
-
-
-
-
-###################
-
 clustExpectedDens <- data.frame(VorId = 1:1298)
 
 clustExpectedDens <- autoExpctdP('T',t,clustExpectedDens,comp)
@@ -158,9 +158,7 @@ cor(clustExpectedDens$sumW,densV)^2
 
 hist(densV-clustExpectedDens$sumW/18,breaks = 50)
 
-
-
-########
+##### Automation
 
 quickTest <- function(t,comp){
   clustExpectedDens <- data.frame(Id = 1:1666)
@@ -294,17 +292,17 @@ quickTestNetN <- function(t,comp){
   return(list(c,h))
 }
 
+###### Results
 
-########
-
-
-range(vorData$dens)
-range(densV)
+############
+### HERE ###
+### |||| ###
+### vvvv ###
+############
 
 hist(densV)
 hist(elecV)
 
-length(densV)
 nightV <- tdata$elec
 
 comp <- c(0,500,10000,20000,60000)
@@ -321,14 +319,12 @@ res3 <- quickTestNetN(t2,comp2)
 res3[[1]]
 plot(res3[[2]])
 
-
 comp2 <- c(0,10,30,50,70)
 t2 <- c(0.82,0.6,0.6,0.7)
 
 res2 <- quickTestN(t2,comp2)
 res2[[1]]
 plot(res2[[2]])
-
 
 # Different conditions
 
@@ -344,8 +340,6 @@ t <- c(0.89,0.65,0.65,0.7)
 res <- quickTestNet(t,comp)
 res[[1]]
 plot(res[[2]])
-
-
 
 comp <- c(min(towerloc$dens,na.rm=T),500,5000,20000,max(towerloc$dens,na.rm=T))
 t <- c(0.80,0.55,0.55,0.55)
@@ -372,19 +366,24 @@ res <- quickTest(t,comp)
 res[[1]]
 plot(res[[2]])
 
+############
+### ^^^^ ###
+### |||| ###
+### HERE ###
+############
 
 
+#######################################
+##### Dendrogram-based clustering #####
+#######################################
 
-######################################################
 
-
-# need to preload the right <premat> !!!!!
+# need to preload the right <premat>
 # number of bins & {24,168,8760} for D/W/Y
 n <- 5
 h <- 24
 s <- 10
 
-#
 #bins <- seq(0,55000,length.out = n+1)
 bins <- c(0,500,1500,5000,20000,55000)
 binRef <- rep(list(NULL),n)
@@ -412,8 +411,6 @@ plot(1:24,curveRef[1,],pch="",ylim=c(0,5000))
 for(i in 1:n){
   lines(1:24,curveRef[i,],lwd=2)
 }
-
-i=200
 
 clustRef <- rep(0,1298)
 for(i in 1:1298){
@@ -447,16 +444,15 @@ lines(1:5000,1:5000)
 lines(1:24,premat[185,],lwd=2,col=2)
 
 
-
-
-
-
-
-
-
-
-
 ###### Random samples to cluster ######
+
+# Establishing performance or random sampling for comparison (Figure 3)
+
+############
+### HERE ###
+### |||| ###
+### vvvv ###
+############
 
 # Dens
 
@@ -570,16 +566,16 @@ text(-0.5,0.46,"Texts",col=palette[2])
 arrows(v, testMinRef, v, testMaxRef, length=0.05, angle=90, code=3, col = "grey67")
 points(v,testAvgRef,pch=18, col = "grey67")
 
+############
+### ^^^^ ###
+### |||| ###
+### HERE ###
+############
+
+
 #######################################
 
-
-
-
-
-plot(senCommune)
-
-
-
+# Supplementary visualisations (Figure 4)
 
 ###### Avg curve in cluster ######
 
@@ -607,13 +603,6 @@ lines(1:24,curve3/curve3[14],col="darkgreen",lwd=2)
 ##################################
 
 
-
-
-
-
-###
-
-
 plot(seqRef/1298*100,corRef,pch=20,ylab="R²",xlab="Density sample size (%)")#,main="Full random")
 lines(c(-100,1300),c(0.76,0.76),lty=2)
 lines(c(-100,1300),c(0.74,0.74),lty=2)
@@ -627,7 +616,6 @@ lines(c(26,26),c(-0.1,1),lty=2,col=palette[2])
 #text(0.4,0.45,"Direct cor",col=palette[2])
 
 densV <- tdata$dens
-
 
 seqRef <- floor(seq(1,1666,length.out = n))
 corRef <- rep(0,n)
@@ -654,7 +642,6 @@ lines(c(62,62),c(-0.1,1),lty=2,col=palette[2])
 text(0.8,0.65,"Calls (n)")
 text(-0.5,0.46,"Texts")
 
-
 tdata <- read.csv("voronoi.csv")
 
 densV <- densV[refnZ]
@@ -674,26 +661,14 @@ towerloc$clust[c3] <- 3
 towerloc$clust[c4] <- 4
 towerloc$clust[c5] <- 5
 
-library(rgdal)
-library(raster)
-
-
-senCommune <- readOGR("Senegal_Communes_552_DELUXE.shp")
-
-
-projection(senCommune)
-projection(s1) <- projection(senCommune)
-
 
 paletteNew <- c("orchid1","coral1","royalblue4","limegreen","tomato4")
-
 
 plot.new()
 #plot(senComPop2,add=T)
 plot(senCommune,col="grey96")
 points(towerloc$tLong,towerloc$tLat,col=alpha(paletteNew[towerloc$clust],0.75),pch=16,cex=1)
 legend("topright",c("0","100","1010","1011","11"),pch=c(16,16,16,16),col=paletteNew)
-
 
 plot(s1,col=paletteNew[1],add=T,pch=20)
 plot(s2,col=paletteNew[2],add=T,pch=20)
@@ -717,6 +692,12 @@ premat <- prematDT[refnZ,]
 n <- 50
 
 k = 50
+
+
+#####-----------
+##### Automation
+#####-----------
+
 
 testMethSd <- function(n,dend,premat){
   result <- rep(list(NULL),2)
@@ -780,8 +761,6 @@ testMethSdY <- function(n,dend,premat){
   return(result)
 }
 
-
-
 plot(dendDT)
 
 testMethCor <- function(n,dend,premat){
@@ -816,8 +795,6 @@ testMethCor <- function(n,dend,premat){
   return(result)
 }
 
-
-
 plot(seqRef/1666*100,corRef,pch=18,ylab="R²",xlab="Density sample size (%)",col="grey67")#,main="Full random")
 lines(c(-100,1300),c(0.43,0.43),lty=2,col=palette[2])
 lines(c(-100,1300),c(0.62,0.62),lty=2,col=palette[2])
@@ -827,6 +804,22 @@ text(0.8,0.65,"Calls (n)",col=palette[2])
 text(-0.5,0.46,"Texts",col=palette[2])
 text(47,0,"45",col="grey67")
 text(64,0,"62",col="grey67")
+
+
+#####--------
+##### Results
+#####--------
+
+
+# Numerous results that are the basis of figure 3 and of the figure in the supplementary information.
+# The first letter indicates the time scale (day, week, year), the second on indicates the type of mobile phone activity (Texts, Calls, Call Lengths) and the third one the type of distance matrix (Sd or Cor).
+
+
+############
+### HERE ###
+### |||| ###
+### vvvv ###
+############
 
 
 # D / T / Sd  ------------------OK
@@ -852,7 +845,6 @@ lines(c(8,8),c(-0.1,1),lty=2)
 lines(c(30,30),c(-0.1,1),lty=2)
 text(10,0,"8")
 text(32,0,"30")
-
 
 ##### x30
 
@@ -925,9 +917,6 @@ ggplot()+
   geom_boxplot(data = temp2, aes(x=new, y=value,group=new), notch=F, outlier.shape=18, outlier.size = 2, outlier.color = "grey67", fill="grey67", alpha=0.4,width=1.2)+
   geom_boxplot(data = temp, aes(x=new, y=value,group=new), notch=F, outlier.shape=20, outlier.size = 2, outlier.color = "red", fill="red", alpha=0.5,width=1.2)
 
-
-
-
 # Y / C / Sd
 dataTemp <- read.csv(file = paste("Data/z_dMat_","Y","Sd","_","C","_","T",".csv",sep=""),header = F)
 dataTemp <- as.matrix(dataTemp)
@@ -935,7 +924,6 @@ colnames(dataTemp) <- 1:nrow(dataTemp)
 dataTemp <- as.dist(dataTemp)
 dendYC <- as.dendrogram(hclust(dataTemp,method = method.clust))
 test1 <- testMethSd(50,dendYC,prematYC)
-
 
 # D / L / Sd  ------------------OK
 dataTemp <- read.csv(file = paste("Data/z_dMat_","D","Sd","_","L","_","T",".csv",sep=""),header = F)
@@ -959,11 +947,6 @@ lines(c(30,30),c(-0.1,1),lty=2)
 text(16,0,"14")
 text(32,0,"30")
 
-
-
-
-
-
 # Y / T / Sd
 dataTemp <- read.csv(file = paste("Data/z_dMat_","Y","Sd","_","T","_","T",".csv",sep=""),header = F)
 dataTemp <- as.matrix(dataTemp)
@@ -971,11 +954,6 @@ colnames(dataTemp) <- 1:nrow(dataTemp)
 dataTemp <- as.dist(dataTemp)
 dendYT <- as.dendrogram(hclust(dataTemp,method = method.clust))
 test3 <- testMethSd(50,dendYT,prematYT)
-
-
-
-
-
 
 # D / C / Cor
 dataTemp <- read.csv(file = paste("Data/z_dMat_","D","Cor","_","C","_","T",".csv",sep=""),header = F)
@@ -1023,24 +1001,6 @@ lines(c(35,35),c(-0.1,1),lty=2)
 text(17,0,"15")
 text(37,0,"35")
 
-
-
-
-
-
-
-
-
-
-
-
-############
-### HERE ###
-### |||| ###
-### vvvv ###
-############
-
-
 # Y / L / Sd
 dataTemp <- read.csv(file = paste("Data/z_dMat_","Y","Sd","_","L","_","T",".csv",sep=""),header = F)
 dataTemp <- as.matrix(dataTemp)
@@ -1062,25 +1022,6 @@ lines(c(30,30),c(-0.1,1),lty=2)
 lines(c(56,56),c(-0.1,1),lty=2)
 text(32,0,"30")
 text(58,0,"56")
-
-
-############
-### ^^^^ ###
-### |||| ###
-### HERE ###
-############
-
-
-
-
-
-
-
-
-
-
-
-
 
 sumDT <- rowSums(prematDT)
 sumDC <- rowSums(prematDC)
@@ -1137,13 +1078,6 @@ lines(c(30,30),c(-0.1,1),lty=2)
 text(17,0,"15")
 text(32,0,"30")
 
-
-
-
-
-
-
-
 # W / T / Sd  ------------------OK
 dataTemp <- read.csv(file = paste("Data/z_dMat_","W","Sd","_","T","_","T",".csv",sep=""),header = F)
 dataTemp <- as.matrix(dataTemp)
@@ -1166,11 +1100,6 @@ lines(c(20,20),c(-0.1,1),lty=2)
 text(18,0,"16")
 text(22,0,"20")
 
-
-
-
-
-
 # W / C / Sd
 dataTemp <- read.csv(file = paste("Data/z_dMat_","W","Sd","_","C","_","V",".csv",sep=""),header = F)
 dataTemp <- as.matrix(dataTemp)
@@ -1178,11 +1107,6 @@ colnames(dataTemp) <- 1:nrow(dataTemp)
 dataTemp <- as.dist(dataTemp)
 dendWC <- as.dendrogram(hclust(dataTemp,method = method.clust))
 test7 <- testMethSd(50,dendWC,prematWC)
-
-
-
-
-
 
 # W / L / Sd
 dataTemp <- read.csv(file = paste("Data/z_dMat_","W","Sd","_","L","_","T",".csv",sep=""),header = F)
@@ -1206,15 +1130,13 @@ lines(c(27,27),c(-0.1,1),lty=2)
 text(13,0,"11")
 text(29,0,"27")
 
-
-433*433
-
-
-
-
-
 multiplot(test1[[3]],test2[[3]],test3[[3]],test4[[3]],test5[[3]],test6[[3]],test7[[3]],test8[[3]],ncol=4)
 
+############
+### ^^^^ ###
+### |||| ###
+### HERE ###
+############
 
 
 plot(test1[[2]]/1298*100,test1[[1]],pch=20,ylab="R²",xlab="Density sample size (%)")#,main="Tree Guided (Y/C/Sd)")
@@ -1222,8 +1144,6 @@ lines(c(-100,1300),c(0.55,0.55),lty=2)
 lines(c(-100,1300),c(0.53,0.53),lty=2)
 lines(c(-100,1300),c(0.49,0.49),col=palette[2],lty=2)
 lines(c(-100,1300),c(0.47,0.47),col=palette[2],lty=2)
-
-
 
 test1[[3]]
 test2[[3]]
@@ -1233,8 +1153,6 @@ test5[[3]]
 test6[[3]]
 test7[[3]]
 test8[[3]]
-
-test8[[2]]
 
 plot(test1[[2]],test1[[1]],xlim = c(0,100),pch=20,ylab="R²",xlab="Density sample size (%)")#,main="Tree Guided (Y/C/Sd)")
 lines(c(-100,1300),c(0.76,0.76),lty=2)
@@ -1285,10 +1203,6 @@ lines(c(-100,1300),c(0.40,0.40),col=palette[2],lty=2)
 lines(c(-100,1300),c(0.36,0.36),col=palette[2],lty=2)
 lines(c(45,45),c(0,1))
 
-test6[[3]]
-
-test3[[3]]
-
 plot.new()
 test1[[3]]
 plot.new()
@@ -1301,140 +1215,16 @@ plot.new()
 test5[[3]]
 plot.new()
 test6[[3]]
-plot.new()
-test7[[3]]
-plot.new()
-test8[[3]]
-plot.new()
-test9[[3]]
-
-
-sample(sampTree(dend,1))
-
-n=10
-
-length(sampTree(dend,10))
-
-
-
-#
-n <- 50
-
-corRef2 <- rep(0,n)
-for(k in 1:n){
-  samp <- sample(sampTree(dend,k))
-  densEst <- rep(0,1298)
-  for(i in 1:1298){
-    d <- rep(NA,length(samp))
-    for(j in 1:length(samp)){
-      d[j] <- sd(abs(premat[i,]-premat[samp[j],]))
-    }
-    densEst[i] <- densV[samp[which.min(d)]]
-  }
-  corRef2[k] <- cor(densEst,densV)^2
-}
-
-
-
-plot(l/1298*100,corRef2,pch=20,ylab="R²",xlab="Density sample size",main="Tree guided")
-lines(c(-100,1300),c(0.55,0.55),lty=2)
-lines(c(-100,1300),c(0.53,0.53),lty=2)
-lines(c(-100,1300),c(0.49,0.49),col=3,lty=2)
-lines(c(-100,1300),c(0.47,0.47),col=3,lty=2)
-text(1.5,0.57,"direct cor/log")
-text(0.1,0.45,"direct cor",col=3)
-
- 
-plot.new() ## clean up device
-p
-
-
-
-
-level = 50
-
-sampTree(dend,50)
-
-
-sampTree <- function(dend,level){
-  if(level == 1 | length(dend) == 1){
-    return(as.numeric(sample(labels(dend),1)))
-  }else{
-    return(c(sampTree(dend[[1]],level-1),sampTree(dend[[2]],level-1)))
-  }
-}
-
-l <- rep(0,50)
-for(i in 1:50){
-  l[i] <- length(sampTree(dend,i))
-  print(length(sampTree(dend,i)))
-}
-
-plot(1:1298,sort(as.numeric(labels(dend)),decr=F))
-
-plot(sort(as.numeric(labels(dend[[1]])),decr=F),sort(as.numeric(labels(dend[[1]])),decr=F))
-
-plot(sort(as.numeric(labels(dend[[2]])),decr=F),sort(as.numeric(labels(dend[[2]])),decr=F))
-
-
-
-test <- sampTree(dend,50)
-
-plot(1:1298,sort(test,decr=F))
-
-plot(dend)
-plot(dend[[1]])
-plot(dend[[2]])
-plot(dend[[2]][[1]])
-
-length(sampTree(dend,45))
-
-
-
-
-
-ispure1 <- function(dend,var,comp,t){
-  test <- FALSE
-  n <- length(comp)-1
-  for(i in 1:n){
-    if(length(which(var[as.numeric(labels(dend))] >= comp[i] & var[as.numeric(labels(dend))] <= comp[i+1])) > length(labels(dend))*t[i]){
-      test <- TRUE
-    }
-  }
-  if(test){
-    return(list(labels(dend)))
-  }else{
-    return(c(ispure1(dend[[1]],var,comp,t),ispure1(dend[[2]],var,comp,t)))
-  }
-}
-
-
-dataTemp <- read.csv(file = paste("Data/z_dMat_","D","Sd","_","T","_","V",".csv",sep=""),header = F)
-dataTemp <- as.matrix(dataTemp)
-colnames(dataTemp) <- 1:nrow(dataTemp)
-dataTemp <- as.dist(dataTemp)
-dend <- as.dendrogram(hclust(dataTemp,method = method.clust))
-
-
-length(dend)
-
-
 
 
 #### Electricity
 
-#########################
-###                   ###
-###       | | |       ###
-###       | | |       ###
-###       | | |       ###
-###       | | |       ###
-###       | | |       ###
-###       | | |       ###
-###       v v v       ###
-###                   ###
-#########################
 
+############
+### HERE ###
+### |||| ###
+### vvvv ###
+############
 
 testMethSdN <- function(n,dend,premat){
   result <- rep(list(NULL),2)
@@ -1465,8 +1255,6 @@ testMethSdN <- function(n,dend,premat){
   #result[[3]] <- recordPlot()
   return(result)
 }
-
-
 
 ####################### NEW
 
@@ -1505,7 +1293,6 @@ for(i in 1:50){
   testMin[i] <- min(resMat[,i])
   testMax[i] <- max(resMat[,i])
 }
-
 
 v <- seqRef/1612*100
 
@@ -1576,11 +1363,13 @@ ggplot(df1, aes(x, log(y))) +
 #text(16,0,"14")
 #text(32.1,0,"29.1")
 
-
+############
+### ^^^^ ###
+### |||| ###
+### HERE ###
+############
 
 ###########################
-
-
 
 dataTemp <- read.csv(file = paste("Data/z_dMat_","Y","Sd","_","C","_","V",".csv",sep=""),header = F)
 dataTemp <- as.matrix(dataTemp)
@@ -1618,7 +1407,6 @@ text(70.5,-0.02,"68%")
 text(3.1,0.91,"Capped Poisson")
 text(0.4,0.37,"Direct cor",col=palette[2])
 
-
 plot(test1N[[2]],test1N[[1]],pch=20,ylab="R²",xlab="Electricity sample size (%)")#,main="Full random")
 lines(c(-100,1300),c(0.86,0.86),lty=2)
 lines(c(-100,1300),c(0.89,0.89),lty=2)
@@ -1631,20 +1419,12 @@ text(35.5,-0.02,"33%")
 #text(3.1,0.91,"Capped Poisson")
 #text(0.4,0.37,"Direct cor",col=palette[2])
 
-
-
-
-
-
-
 dataTemp <- read.csv(file = paste("Data/z_dMat_","W","Sd","_","L","_","V",".csv",sep=""),header = F)
 dataTemp <- as.matrix(dataTemp)
 colnames(dataTemp) <- 1:nrow(dataTemp)
 dataTemp <- as.dist(dataTemp)
 dendWL <- as.dendrogram(hclust(dataTemp,method = method.clust))
 test2N <- testMethSdN(50,dendWL,prematWL)
-
-
 
 plot(test2N[[2]],test2N[[1]],pch=20,ylab="R²",xlab="Electricity sample size (%)")#,main="Full random")
 lines(c(-100,1300),c(0.86,0.86),lty=2)
@@ -1657,10 +1437,3 @@ text(16,-0.02,"14%",col=palette[2])
 text(35.5,-0.02,"33%")
 #text(3.1,0.91,"Capped Poisson")
 #text(0.4,0.37,"Direct cor",col=palette[2])
-
-
-
-test1N[[3]]
-
-
-
