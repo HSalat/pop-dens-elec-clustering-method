@@ -1,5 +1,4 @@
 library(rgdal)
-
 ### Required data:
 ###   <individus.csv> and <habitat.csv> are extracts from the 2013 Census, see data section of the general documentation
 ###   <Senegal_Communes_552.shp> is a shapefile of Senegal at Commune level (522 entities according to the post DEC 2013 definitions)
@@ -10,12 +9,6 @@ folderin <- "data/"
 
 gridSenegal <- c(-17.54319,-11.34247,12.30786,16.69207,744,527) # coordinates of a bounding box around Senegal
 monthslist <- c("jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec")
-
-
-
-
-
-holesSenegal <- which(is.na(grid_senComPop)) # reference of empty spaces (e.g. Sea, different Country)
 
 
 #######################################################
@@ -33,10 +26,13 @@ habitat <- read.csv("/data/habitat.csv",header = T, sep=";")
 popelec <- read.csv("/data/popelec.csv")
 
 
-#####----------------------------------------
-##### Data in Shapefiles (dens, dens2, elec) 
-#####----------------------------------------
+#####------------------
+##### Geographic data 1
+#####------------------
 
+
+# A gridded version of the data is produced to match the format of the satellite data.
+# Note that this was replaced in later works by using raster tools directly
 
 senCommune <- readOGR("Senegal_Communes_552.shp")
 
@@ -71,46 +67,119 @@ senComPop <- rasterize(senCommune, r, 'density')
 
 grid_senComPop <- as.matrix(senComPop)
 grid_senComPop <- grid_senComPop[nrow(grid_senComPop):1,]
-# grid_senComPop[which(is.na(grid_senComPop))] <- 0
+
+holesSenegal <- which(is.na(grid_senComPop))
 
 
-                                
-                                
-vor_data$dens3 <- avg_voronoi_ref_NA(grid_senComPop2,ref2)[[2]]
+#####--------------------------------------------------------------
+##### Mobile phone data (texts, calls, length) and Reference tables
+#####--------------------------------------------------------------
 
 
-cor(vor_data$dens,vor_data$night)^2
-cor(vor_data$dens3,vor_data$night)^2
+# Similarly, gridded versions of mobile phone activity are produced.
+# This was also replaced by more usual GIS tools at a later stage
 
-subsettemp <- which(vor_data$night >0)
+# Loading texts
+i=12
+assign(paste("sptt",i,sep="_"),monthlyText(i,folderin))
 
-cor(log(vor_data$dens[subsettemp]),log(vor_data$night[subsettemp]))^2
-cor(log(vor_data$dens3[subsettemp]),log(vor_data$night[subsettemp]))^2
+sptt_all <- cbind(sptt_1,sptt_2,sptt_3,sptt_4,sptt_5,sptt_6,
+                  sptt_7,sptt_8,sptt_9,sptt_10,sptt_11,sptt_12)
+sptt_all <- sptt_all[,c(1,2,4,6,8,10,12,14,16,18,20,22,24)]
+colnames(sptt_all) <- c("tower",monthslist)
+
+sptt_all$year <- sptt_all$jan+sptt_all$feb+sptt_all$mar+sptt_all$apr+sptt_all$may+sptt_all$jun+sptt_all$jul+sptt_all$aug+sptt_all$sep+sptt_all$oct+sptt_all$nov+sptt_all$dec
+
+# Loading calls
+i=12
+assign(paste("sptv",i,sep="_"),monthlyVoice(i,folderin))
+
+sptv_all <- cbind(sptv_1,sptv_2,sptv_3,sptv_4,sptv_5,sptv_6,
+                  sptv_7,sptv_8,sptv_9,sptv_10,sptv_11,sptv_12)
+sptv_all_n <- sptv_all[,c(1,2,5,8,11,14,17,20,23,26,29,32,35)]
+sptv_all_t <- sptv_all[,c(1,3,6,9,12,15,18,21,24,27,30,33,36)]
+colnames(sptv_all_n) <- c("tower",monthslist)
+colnames(sptv_all_t) <- c("tower",monthslist)
+
+sptv_all_n$year <- sptv_all_n$jan+sptv_all_n$feb+sptv_all_n$mar+sptv_all_n$apr+sptv_all_n$may+sptv_all_n$jun+sptv_all_n$jul+sptv_all_n$aug+sptv_all_n$sep+sptv_all_n$oct+sptv_all_n$nov+sptv_all_n$dec
+sptv_all_t$year <- sptv_all_t$jan+sptv_all_t$feb+sptv_all_t$mar+sptv_all_t$apr+sptv_all_t$may+sptv_all_t$jun+sptv_all_t$jul+sptv_all_t$aug+sptv_all_t$sep+sptv_all_t$oct+sptv_all_t$nov+sptv_all_t$dec
+
+# Gridding
+towerloc <- read.csv("data/SITE_ARR_LONLAT.csv",header = T, sep=",")
+
+towerloc$mati <- rep(0,1666)
+towerloc$matj <- rep(0,1666)
+
+country <- gridSenegal
+x <- seq(country[1],country[2],length.out = country[5]+1)
+y <- seq(country[3],country[4],length.out = country[6]+1)
+
+for(i in 1:1666){
+  towerloc$mati[i] <- max(which(towerloc$lat[i] > y))
+  towerloc$matj[i] <- max(which(towerloc$lon[i] > x))
+}
+
+tower_data <- data.frame(tId=1:1666,tLong=towerloc$lon,tLat=towerloc$lat)
+tower_data$tMatRow <- towerloc$mati
+tower_data$tMatCol <- towerloc$matj
+tower_data$tMatCoor <- towerloc$mati+(towerloc$matj-1)*527
+tower_data$tTexts <- sptt_all$year
+tower_data$tCalls <- sptv_all_n$year
+tower_data$tLength <- sptv_all_t$year
+tower_data$tvId <- rep(NA,1666)
+attach(tower_data)
+
+grid_texts <- griddingNation(tLong,tLat,tTexts,gridSenegal,holesSenegal,"sum")
+grid_calls <- griddingNation(tLong,tLat,tCalls,gridSenegal,holesSenegal,"sum")
+grid_length <- griddingNation(tLong,tLat,tLength,gridSenegal,holesSenegal,"sum")
+
+# Towers that fall within the same px in the grid are merged, this is recorded by a common 'tvId'
+ref <- which(grid_calls>0)
+ref2 <- which(grid_calls>0,arr.ind=T)
+for(k in 1:1666){
+  if(length(which(ref == tower_data$tMatCoor[k]))>0)
+    tower_data$tvId[k] <- which(ref == tower_data$tMatCoor[k])
+}
+
+for(i in 1:12){
+  assign(paste("grid_Sptt",monthslist[i],sep="_"),griddingNation(tLong,tLat,sptt_all[,i+1],gridSenegal,holesSenegal,"sum"))
+  assign(paste("grid_Sptv_n",monthslist[i],sep="_"),griddingNation(tLong,tLat,sptv_all_n[,i+1],gridSenegal,holesSenegal,"sum"))
+  assign(paste("grid_Sptv_t",monthslist[i],sep="_"),griddingNation(tLong,tLat,sptv_all_t[,i+1],gridSenegal,holesSenegal,"sum"))
+}
+
+vor_data <- data.frame(vid=1:length(ref))
+vor_data$vMatRow <- ref2[,1]
+vor_data$vMatCol <- ref2[,2]
+vor_data$vMatCoor <- ref
+vor_data$cells <- avg_voronoi_ref_NA(grid_calls,ref2)[[4]]
+vor_data$dens <- avg_voronoi_ref_NA(grid_senComPop,ref2)[[2]]
+vor_data$dens2 <- avg_voronoi_ref_NA(grid_senComDens,ref2)[[2]]
+vor_data$night <- avg_voronoi_ref_NA(nightlight,ref2)[[2]]
+vor_data$nightp <- avg_voronoi_ref_NA(nightlightxpct,ref2)[[2]]
+vor_data$texts <- avg_voronoi_ref_NA(grid_texts,ref2)[[2]]
+vor_data$calls <- avg_voronoi_ref_NA(grid_calls,ref2)[[2]]
+vor_data$length <- avg_voronoi_ref_NA(grid_length,ref2)[[2]]
+vor_data$elec <- avg_voronoi_ref_NA(grid_senComElec,ref2)[[2]]
+
+for(i in 1:nrow(vor_data)){
+  if(vor_data$dens2[i] == 0 & vor_data$dens[i] > 1000){
+    vor_data$dens2[i] <- vor_data$dens[i]
+  }
+}
 
 
+#####------------------
+##### Geographic data 2 
+#####------------------
 
 
+senComPop2 <- rasterize(senCommune, r, 'COD_ENTITE')
 
-senCommune3@data$CC_45 <- test$CC_45
-temp <- aggregate(popsize ~ CC_45, data=senCommune3@data, FUN = "sum")
-colnames(temp)[2] <- "pop"
+senComPop2 <- rasterize(senCommune, r, 'density')
 
-senCommune3@data <- senCommune3@data[order(senCommune3@data$id),]
-row.names(senCommune3@data) <- as.character(0:551)
-
-senCommune3@data$density <- senCommune3@data$popsize/senCommune3@data$SUPERFICIE
-
-r <- raster(ncol=744, nrow=527)
-extent(r) <- extent(senCommune3)
-
-senComPop2 <- rasterize(senCommune3, r, 'COD_ENTITE')
-
-senComPop2 <- rasterize(senCommune3, r, 'density')
-
-senComPop3 <- rasterize(senCommune3, r, 'shelec')
+senComPop3 <- rasterize(senCommune, r, 'shelec')
 
 extent(senComPop2) <- extent(senCommune)
-
 
 grid_senComPop2 <- as.matrix(senComPop2)
 grid_senComPop2 <- grid_senComPop2[nrow(grid_senComPop2):1,]
@@ -119,81 +188,38 @@ grid_senComPop2[which(is.na(grid_senComPop))] <- NA
 
 vor_data$dens3 <- avg_voronoi_ref_NA(grid_senComPop2,ref2)[[2]]
 
-
-cor(vor_data$dens,vor_data$night)^2
-cor(vor_data$dens3,vor_data$night)^2
-
-
-cor(vor_data$texts,vor_data$dens3)^2
-cor(vor_data$calls,vor_data$dens3)^2
-cor(vor_data$length,vor_data$dens3)^2
-
-
 subset <- setdiff(1:1298,which(vor_data$texts == 0))
 subset <- setdiff(subset,which(vor_data$dens3 == 0))
 
 
-cor(log(vor_data$texts[subset]),log(vor_data$dens3[subset]))^2
-cor(log(vor_data$calls[subset]),log(vor_data$dens3[subset]))^2
-cor(log(vor_data$length[subset]),log(vor_data$dens3[subset]))^2
+#####---------------------------------------
+##### Nighttime lights data (night, nightp) 
+#####---------------------------------------
 
 
-senCommune3@data[which(senCommune3@data$COD_ENTITE %in% c(10120204,10110200)),]
+imported_raster <- raster("/data/F182013.v4c.avg_lights_x_pct.tif")
+subset <- crop(imported_raster,extent(senCommune))
+nightlightxpct <- as.matrix(subset)
+nightlightxpct <- nightlightxpct[nrow(nightlightxpct):1,]
 
-senCommune3@data$ident <- 0
-senCommune3@data$popsize[which(senCommune3@data$COD_ENTITE == 10120204)]
-senCommune3@data$popsize[which(senCommune3@data$COD_ENTITE == 10110200)]
+imported_raster2 <- raster("/data/F182013.v4c_web.stable_lights.avg_vis.tif")
+subset2 <- crop(imported_raster2,extent(senCommune))
+nightlight <- as.matrix(subset2)
+nightlight <- nightlight[nrow(nightlight):1,]
 
-senCommune3@data$popsize[which(senCommune3@data$COD_ENTITE == 11310100)]
-senCommune3@data$popsize[which(senCommune3@data$COD_ENTITE == 11320103)]
-
-
-senComPop3 <- rasterize(senCommune4, r, 'ident')
-extent(senComPop3) <- extent(senCommune)
-plot(senComPop3)
-
-
-plot(senCommune3)
-
-plot(senComPop2)
-text(senCommune3@data$LONGITUDE,senCommune3@data$LATITUDE,senCommune3@data$COD_ENTITE)
+nightlightxpct[which(is.na(grid_senComPop))] <- NA
+nightlight[which(is.na(grid_senComPop))] <- NA
 
 
-
-plot(senComPop2,xlim=c(-15,-14),ylim=c(12.5,14))
-text(senCommune3@data$LONGITUDE,senCommune3@data$LATITUDE,senCommune3@data$COD_ENTITE)
-
-plot(senComPop3,xlim=c(-15,-14),ylim=c(12.5,14))
-text(senCommune3@data$LONGITUDE,senCommune3@data$LATITUDE,senCommune3@data$COD_ENTITE)
+#####------------------
+##### Geographic data 3 
+#####------------------
 
 
-text(senCommune3@data$LONGITUDE[403],senCommune3@data$LATITUDE[403],senCommune3@data$COD_ENTITE[403])
+# Final aligned grids for main parameters
 
-
-cents <- coordinates(senCommune)
-
-plot(senCommune,xlim=c(-15,-14),ylim=c(12.5,14))
-text(cents[,1],cents[,2],senCommune@data$OBJECTID_1)
-
-
-setdiff(senCommune3@data)
-
-setdiff(senCommune3@data$COD_ENTITE,popelec$cacr)
-
-View(popelec)
-View(senCommune3@data)
-head(popelec)
-
-senCommune <- readShapePoly("C:/Users/Hadrien/Desktop/Data/Export_Output_2.shp",delete_null_obj=TRUE)
-senCommune2 <- readShapePoints("C:/Users/Hadrien/Desktop/Data/Export_Output_5.shp")
-
-# See "Estimated consumption" for "habitat2"
-habitat3 <- aggregate(habitat2,by=list(habitat2$Code),FUN="mean")
+habitat3 <- aggregate(habitat,by=list(habitat$Code),FUN="mean")
 senCommune@data <- merge(senCommune@data,habitat3,by.x="CC_4",by.y="Group.1",all.x=T)
-
-View(senCommune2@data)
-
-length(unique(senCommune2@data$CC_45))
 
 r <- raster(ncol=744, nrow=527)
 extent(r) <- extent(senCommune)
@@ -226,75 +252,9 @@ grid_senComDens[which(is.na(grid_senComDens))] <- 0
 grid_senComDens[which(is.na(grid_senComPop))] <- NA
 
 
-#####-----------------------------------------------
-##### [OLD] Mobile phone data (texts, calls, length) 
-#####-----------------------------------------------
-
-
-towerloc <- read.csv("/Users/Hadrien/Desktop/Data/ContextData/SITE_ARR_LONLAT.csv",header = T, sep=",")
-
-# Texts
-i=12
-assign(paste("sptt",i,sep="_"),monthlyText(i,folderin))
-
-sptt_all <- cbind(sptt_1,sptt_2,sptt_3,sptt_4,sptt_5,sptt_6,
-                  sptt_7,sptt_8,sptt_9,sptt_10,sptt_11,sptt_12)
-sptt_all <- sptt_all[,c(1,2,4,6,8,10,12,14,16,18,20,22,24)]
-colnames(sptt_all) <- c("tower",monthslist)
-
-sptt_all$year <- sptt_all$jan+sptt_all$feb+sptt_all$mar+sptt_all$apr+sptt_all$may+sptt_all$jun+sptt_all$jul+sptt_all$aug+sptt_all$sep+sptt_all$oct+sptt_all$nov+sptt_all$dec
-
-# Calls
-i=12
-assign(paste("sptv",i,sep="_"),monthlyVoice(i,folderin))
-
-sptv_all <- cbind(sptv_1,sptv_2,sptv_3,sptv_4,sptv_5,sptv_6,
-                  sptv_7,sptv_8,sptv_9,sptv_10,sptv_11,sptv_12)
-sptv_all_n <- sptv_all[,c(1,2,5,8,11,14,17,20,23,26,29,32,35)]
-sptv_all_t <- sptv_all[,c(1,3,6,9,12,15,18,21,24,27,30,33,36)]
-colnames(sptv_all_n) <- c("tower",monthslist)
-colnames(sptv_all_t) <- c("tower",monthslist)
-
-sptv_all_n$year <- sptv_all_n$jan+sptv_all_n$feb+sptv_all_n$mar+sptv_all_n$apr+sptv_all_n$may+sptv_all_n$jun+sptv_all_n$jul+sptv_all_n$aug+sptv_all_n$sep+sptv_all_n$oct+sptv_all_n$nov+sptv_all_n$dec
-sptv_all_t$year <- sptv_all_t$jan+sptv_all_t$feb+sptv_all_t$mar+sptv_all_t$apr+sptv_all_t$may+sptv_all_t$jun+sptv_all_t$jul+sptv_all_t$aug+sptv_all_t$sep+sptv_all_t$oct+sptv_all_t$nov+sptv_all_t$dec
-
-# Gridding
-sptt_all <- merge(sptt_all,towerloc,by.x="tower",by.y="site_id")
-sptv_all_n <- merge(sptv_all_n,towerloc,by.x="tower",by.y="site_id")
-sptv_all_t <- merge(sptv_all_t,towerloc,by.x="tower",by.y="site_id")
-
-grid_Sptt_y <- newrandtoGrid(sptt_all$lon,sptt_all$lat,sptt_all$year,744,527,"sum")
-grid_Sptv_n_y <- newrandtoGrid(sptv_all_n$lon,sptv_all_n$lat,sptv_all_n$year,744,527,"sum")
-grid_Sptv_t_y <- newrandtoGrid(sptv_all_t$lon,sptv_all_t$lat,sptv_all_t$year,744,527,"sum")
-
-for(i in 1:12){
-  assign(paste("grid_Sptt",monthslist[i],sep="_"),newrandtoGrid(sptt_all$lon,sptt_all$lat,sptt_all[,i+1],744,527,"sum"))
-  assign(paste("grid_Sptv_n",monthslist[i],sep="_"),newrandtoGrid(sptv_all_n$lon,sptv_all_n$lat,sptv_all_n[,i+1],744,527,"sum"))
-  assign(paste("grid_Sptv_t",monthslist[i],sep="_"),newrandtoGrid(sptv_all_t$lon,sptv_all_t$lat,sptv_all_t[,i+1],744,527,"sum"))
-}
-
-grid_Sptt_y[which(is.na(grid_senComPop))] <- NA
-grid_Sptv_n_y[which(is.na(grid_senComPop))] <- NA
-grid_Sptv_t_y[which(is.na(grid_senComPop))] <- NA
-
-
-#####---------------------------------------
-##### Nighttime lights data (night, nightp) 
-#####---------------------------------------
-
-
-imported_raster <- raster("/data/Nighttime_lights_visible_x_pct/F182013.v4c.avg_lights_x_pct.tif")
-subset <- crop(imported_raster,extent(senCommune))
-nightlightxpct <- as.matrix(subset)
-nightlightxpct <- nightlightxpct[nrow(nightlightxpct):1,]
-
-imported_raster2 <- raster("/data/Nighttime_lights_visible/F182013.v4c_web.stable_lights.avg_vis.tif")
-subset2 <- crop(imported_raster2,extent(senCommune))
-nightlight <- as.matrix(subset2)
-nightlight <- nightlight[nrow(nightlight):1,]
-
-nightlightxpct[which(is.na(grid_senComPop))] <- NA
-nightlight[which(is.na(grid_senComPop))] <- NA
+##########################
+##### Discarded work #####
+##########################
 
 
 #####-----------------------------------------
@@ -331,109 +291,14 @@ for(i in 1:nrow(habitat2)){
 }
 
 
-#####------------------------------
-##### [OLD] Voronoi reference table 
-#####------------------------------
-
-
-vor_data <- data.frame(grid_id=which(grid_Sptv_n_y>0))
-
-ref <- which(grid_Sptv_n_y>0, arr.ind=T)
-vor_data$cell_count <- avg_voronoi_ref_NA(grid_Sptv_n_y,ref)[[4]]
-vor_data$dens <- avg_voronoi_ref_NA(grid_senComPop,ref)[[2]]
-vor_data$night <- avg_voronoi_ref_NA(nightlight,ref)[[2]]
-vor_data$nightp <- avg_voronoi_ref_NA(nightlightxpct,ref)[[2]]
-vor_data$texts <- avg_voronoi_ref_NA(grid_Sptt_y,ref)[[2]]
-vor_data$calls <- avg_voronoi_ref_NA(grid_Sptv_n_y,ref)[[2]]
-vor_data$length <- avg_voronoi_ref_NA(grid_Sptv_t_y,ref)[[2]]
-vor_data$elec <- avg_voronoi_ref_NA(grid_senComElec,ref)[[2]]
-vor_data$numApp <- avg_voronoi_ref_NA(grid_senComnumApp,ref)[[2]]
-vor_data$estCons <- avg_voronoi_ref_NA(grid_senComEstCons,ref)[[2]]
-
-vor_data$dens2 <- avg_voronoi_ref_NA(grid_senComDens,ref)[[2]]
-for(i in 1:nrow(vor_data)){
-  if(vor_data$dens2[i] == 0 & vor_data$dens[i] > 1000){
-    vor_data$dens2[i] <- vor_data$dens[i]
-  }
-}
-
-vor_data2 <- vor_data[,2:12]
-
-
-#####--------------------------------------------------------------
-##### Mobile phone data (texts, calls, length) and Reference tables
-#####--------------------------------------------------------------
-
-
-towerloc$mati <- rep(0,1666)
-towerloc$matj <- rep(0,1666)
-
-country <- gridSenegal
-x <- seq(country[1],country[2],length.out = country[5]+1)
-y <- seq(country[3],country[4],length.out = country[6]+1)
-
-for(i in 1:1666){
-  towerloc$mati[i] <- max(which(towerloc$lat[i] > y))
-  towerloc$matj[i] <- max(which(towerloc$lon[i] > x))
-}
-
-tower_data <- data.frame(tId=1:1666,tLong=towerloc$lon,tLat=towerloc$lat)
-tower_data$tMatRow <- towerloc$mati
-tower_data$tMatCol <- towerloc$matj
-tower_data$tMatCoor <- towerloc$mati+(towerloc$matj-1)*527
-tower_data$tTexts <- sptt_all$year
-tower_data$tCalls <- sptv_all_n$year
-tower_data$tLength <- sptv_all_t$year
-tower_data$tvId <- rep(NA,1666)
-attach(tower_data)
-
-grid_texts <- griddingNation(tLong,tLat,tTexts,gridSenegal,holesSenegal,"sum")
-grid_calls <- griddingNation(tLong,tLat,tCalls,gridSenegal,holesSenegal,"sum")
-grid_length <- griddingNation(tLong,tLat,tLength,gridSenegal,holesSenegal,"sum")
-
-ref <- which(grid_calls>0)
-ref2 <- which(grid_calls>0,arr.ind=T)
-for(k in 1:1666){
-  if(length(which(ref == tower_data$tMatCoor[k]))>0)
-    tower_data$tvId[k] <- which(ref == tower_data$tMatCoor[k])
-}
-
-for(i in 1:12){
-  assign(paste("grid_Sptt",monthslist[i],sep="_"),griddingNation(tLong,tLat,sptt_all[,i+1],gridSenegal,holesSenegal,"sum"))
-  assign(paste("grid_Sptv_n",monthslist[i],sep="_"),griddingNation(tLong,tLat,sptv_all_n[,i+1],gridSenegal,holesSenegal,"sum"))
-  assign(paste("grid_Sptv_t",monthslist[i],sep="_"),griddingNation(tLong,tLat,sptv_all_t[,i+1],gridSenegal,holesSenegal,"sum"))
-}
-
-vor_data <- data.frame(vid=1:length(ref))
-vor_data$vMatRow <- ref2[,1]
-vor_data$vMatCol <- ref2[,2]
-vor_data$vMatCoor <- ref
-vor_data$cells <- avg_voronoi_ref_NA(grid_calls,ref2)[[4]]
-vor_data$dens <- avg_voronoi_ref_NA(grid_senComPop,ref2)[[2]]
-vor_data$dens2 <- avg_voronoi_ref_NA(grid_senComDens,ref2)[[2]]
-vor_data$night <- avg_voronoi_ref_NA(nightlight,ref2)[[2]]
-vor_data$nightp <- avg_voronoi_ref_NA(nightlightxpct,ref2)[[2]]
-vor_data$texts <- avg_voronoi_ref_NA(grid_texts,ref2)[[2]]
-vor_data$calls <- avg_voronoi_ref_NA(grid_calls,ref2)[[2]]
-vor_data$length <- avg_voronoi_ref_NA(grid_length,ref2)[[2]]
-vor_data$elec <- avg_voronoi_ref_NA(grid_senComElec,ref2)[[2]]
-
-for(i in 1:nrow(vor_data)){
-  if(vor_data$dens2[i] == 0 & vor_data$dens[i] > 1000){
-    vor_data$dens2[i] <- vor_data$dens[i]
-  }
-}
-
-
-#########################
-##### Temporal data #####
-#########################
-
-
 #####--------------
+##### Temporal data
+#####--------------
+
+
 ##### Senelec data
-#####--------------
 
+# Data not provided
 
 for(i in 1:12){
   assign(paste("senelec",i,sep=""),read.csv(paste(folderin,"senelec/DemandSummary2013_",i,".csv",sep="")))
@@ -459,11 +324,7 @@ for(i in 1:24){
 plot(1:24,senelec_yearavg)
 lines(1:24,senelec_yearavg)
 
-
-#####-------------------
 ##### Mobile phone data
-#####-------------------
-
 
 i=12
 assign(paste("tst",i,sep="_"),hourlyText(i,folderin))
@@ -476,6 +337,3 @@ tst_y <- rbind(tst_1,tst_2,tst_3,tst_4,tst_5,tst_6,
 
 tsv_y <- rbind(tsv_1,tsv_2,tsv_3,tsv_4,tsv_5,tsv_6,
                tsv_7,tsv_8,tsv_9,tsv_10,tsv_11,tsv_12)
-
-
-
