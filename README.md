@@ -29,6 +29,7 @@ Data not provided:
 - `data-clustering-network.R` creates basic OD data of mobile phone activity that can be easily tramsformed into adjacency matrices / igraph networks for analysis. It also provides some visualisations of the networks.
 - `data-general.R` loads and computes the main parameters of the algorithms (electrification rate, mobile phone activity...). 
 - `functions.R` groups a number of utility functions to prepare the data and create visualisations. Most are ad-hoc variants of usual functions created to have more control over hidden details when trying different methods or simply adapted to the specific situation. An automated version of the purity-based clustering is presented at the end. The main clustering method is not automated and must be operated using `results-clustering.R`.
+- `main.R` contains initial experiments leading to the creation of the other files. Kept for reference only, as it may explain a missing variable (e.g.) in other files.
 - `results-correlations-table1.R` contains the code to compute Table 1 of the article (up to l. 128) and some visualisations, additional tests and interesting alternatives methods that were not included in the final article.
 
 The data loaded by `data-general.R` is essential to run all other files. The methods used in this file are outdated and the main outputs are best loaded directly from the supplementary data provided.
