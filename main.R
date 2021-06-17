@@ -1,4 +1,16 @@
 library(rgdal)
+library(ggplot2)
+library(reshape2)
+library(maptools)
+library(png)
+library(Matrix)
+library(igraph)
+library(raster)
+library(igraph)
+library(scales)
+library(stats)
+library(tseries)
+library(moments)
 
 source(functions.R)
 source(data-general.R)
@@ -6,13 +18,9 @@ source(data-general.R)
 attach(vor_data)
 
 
-### Required data:
-
-###   <comData.csv> data frame with population density and nighttime lights intensity at Commune level
-###   <vorData.csv> same information as <comData.csv> at Voronoi level around each of the active antenna sites (trimmed to 1298 from 1666 sites) and mobile phone activity
-
-
-vor_data <- read.csv("vorData.csv")
+###########################
+##### WIP experiments #####
+###########################
 
 
 # standardisation of Commune codes
@@ -42,8 +50,6 @@ plot(senCommune,add=T) # boundaries
 # meltedgrid <- melt(grid_senComPop)
 # ggplot(meltedgrid, aes(x = Var2, y = Var1, fill = value)) + geom_tile() + theme(legend.position="none",axis.title.y=element_blank(),axis.title.x=element_blank(),panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.background = element_blank(),axis.text.x = element_text(angle = 90, hjust = 1))+scale_fill_gradient2(low="orange",mid="white",high="steelblue4")
 
-
-
 vor_data$dens2 <- avg_voronoi_ref_NA(grid_senComPop,ref2)[[2]]
 dens2 <- vor_data$dens2
 
@@ -52,8 +58,6 @@ subset <- setdiff(subset,which(dens == 0))
 subset <- setdiff(subset,which(dens2 == 0))
 subsetC2 <- intersect(subset,which(vor_data$dens2 > 5000)) # outdated definition of cities (reduced to 1000 in later work)
 subsetV2 <- intersect(subset,which(vor_data$dens2 <= 5000)) # outdated definition of rural villages
-
-
 
 temp <- glm(night[subset] ~ log(texts[subset]) + log(dens[subset]),family = poisson(link = "log"),na.action = na.exclude)
 cor(night,exp(temp$coefficients[1])*texts^temp$coefficients[2]*dens^temp$coefficients[3])^2
@@ -83,11 +87,7 @@ predicted <- exp(temp$coefficients[1])*length^temp$coefficients[2]*dens2^temp$co
 predicted[which(predicted > 63)] <- 63
 cor(night[subset],predicted)^2
 
-
 vor_data$predicted <- predicted
-
-
-
 
 temp <- glm(night[subsetC2] ~ log(texts[subsetC2]) + log(dens2[subsetC2]),family = poisson(link = "log"),na.action = na.exclude)
 cor(night,exp(temp$coefficients[1])*texts^temp$coefficients[2]*dens2^temp$coefficients[3])^2
@@ -114,26 +114,11 @@ temp <- glm(night[subsetV2] ~ log(length[subsetV2]) + log(dens2[subsetV2]),famil
 cor(night,exp(temp$coefficients[1])*length^temp$coefficients[2]*dens2^temp$coefficients[3])^2
 cor(night[subsetV2],exp(temp$coefficients[1])*length[subsetV2]^temp$coefficients[2]*dens2[subsetV2]^temp$coefficients[3])^2
 
-
-
-
-
-
-
-
-
-
 ##########################################
-
-
-
-
-
 
 diff <- (area(senCommune)/1000000-senCommune@data$SUPERFICIE)/senCommune@data$SUPERFICIE
 plot(1:552,diff)
 plot(1:552,diff,ylim=c(-1,1))
-
 
 senCommuneProper@data <- merge(senCommuneProper@data,popelec,by.x="COD_ENTITE",by.y="cacr",sort=F)
 senCommuneProper@data$density <- senCommuneProper@data$popsize/senCommuneProper@data$SUPERFICIE
@@ -142,9 +127,6 @@ r <- raster(ncol=744, nrow=527)
 extent(r) <- extent(senCommuneProper)
 senComPopProper <- rasterize(senCommuneProper, r, 'density')
 plot(senComPopProper)
-
-
-
 
 grid_senComPopProper <- as.matrix(senComPop)
 grid_senComPopProper <- grid_senComPopProper[nrow(grid_senComPopProper):1,]
@@ -166,71 +148,11 @@ subset <- setdiff(subset,which(vor_data$dens3 == 0))
 cor(log(vor_data$dens[subset]),log(vor_data$night[subset]))^2
 cor(log(vor_data$dens3[subset]),log(vor_data$night[subset]))^2
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 senCommuneTest@data$area_sqkm <- area(senCommuneTest) / 1000000
 
 senCommuneTest@data$diff <- senCommuneTest@data$area_sqkm-senCommuneTest@data$SUPERFICIE
 
-
 plot(1:552,senCommuneTest@data$diff,ylim=c(-1,1))
-
-
-View(senCommuneTest@data)
-
-
-
-
-
-
-
-
-
-
-senCommune2 <- readOGR("shape2.shp")
-
-
-
-
-plot(senCommune2)
-
-View(senCommune2@data)
-
-
-extent(senCommune)
-extent(senCommune2)
-
-summary(senCommune)
-summary(senCommune2)
-
-
-
-
-extentref <- extent(c(-17.53319,-11.33247,12.31786,16.70207))
-
-
-range(senCommune2$LONGITUDE)
-
-
-
-senCommune <- readOGR("gadm36_SEN_4.shp")
-plot(senCommune)
-
-
-proj4string(senCommune)
-proj4string(senCommuneProper)
-
 
 cents <- coordinates(senCommuneProper)
 
@@ -240,52 +162,6 @@ proj4string(dat) <- proj4string(senCommuneProper)
 
 test <- over(dat,senCommune)
 
-length(unique(test$CC_45))
-length(unique(test$COD_ENTITE))
-
-
-length(unique(lookUpTable$com552))
-length(unique(lookUpTable$com433))
-
-setdiff(senCommune@data$CC_4,lookUpTable$com433)
-
-lookUpTable <- data.frame(com552 = senCommuneProper@data$COD_ENTITE, com433 = test$CC_4)
-
-lookUpTable[,1] <- as.character(lookUpTable[,1])
-lookUpTable[,2] <- as.character(lookUpTable[,2])
-
-lookUpTable[129,2] <- lookUpTable[129,1]
-lookUpTable[8,2] <- substr(lookUpTable[8,1],2,8)
-lookUpTable[326,2] <- substr(lookUpTable[326,1],2,8)
-
-
-count <- rep(0,552)
-for(i in 1:552){
-  temp <- senCommuneProper@data$COD_ENTITE[i]
-  for(j in 1:552){
-    if(senCommuneProper@data$COD_ENTITE[j]==temp){
-      count[i] <- count[i]+1
-    }
-  }
-}
-
-
-names <- as.character(senCommuneProper@data$COD_ENTITE)
-for(i in 1:552){
-  if(substr(names[i],1,1) == "0"){
-    names[i] <- substr(names[i],2,8)
-  }
-}
-
-
-length(setdiff(unique(names),unique(lookUpTable$com433)))
-
-length(which(names != lookUpTable$com433))
-
-write.csv(lookUpTable,"lookUpTable.csv",row.names = F)
-
-
-senCommune2 <- readOGR("Limite_Commune_Senegal.shp")
 senCommune2 <- spTransform(senCommune2, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
 
 proj4string(senCommune2)
@@ -319,34 +195,20 @@ sum(senCommune2@data$density*senCommune2@data$SUPERFICIE)
 
 plot(senCommune2@data$area_sqkm,senCommune2@data$SUPERFICIE)
 
-
-sum(senCommune2@data$area_sqkm)
-
 plot(1:552,senCommune2@data$diff)
 lines(c(0,512),c(-50,-50))
 lines(c(0,512),c(50,50))
 
 senCommune2@data$diff <- senCommune2@data$SUPERFICIE-senCommune2@data$area_sqkm
 
-
 senCommune2.subset <- senCommune2[senCommune2@data$diff < 50 & senCommune2@data$diff > -50,]
 plot(senCommune2.subset)
-
-View(senCommune2.subset@data)
-
 
 senCommune2.subset2 <- senCommune2[!(senCommune2@data$diff < 50 & senCommune2@data$diff > -50),]
 plot(senCommune2.subset2)
 
-
-
 temp <- habitat$IDDR
 temp2 <- rep("0",length(temp))
-
-nchar("zzzz")
-
-range(nchar(temp))
-
 
 for(i in 1:length(temp)){
   if(nchar(temp[i]) == 11){
@@ -356,9 +218,7 @@ for(i in 1:length(temp)){
     }
 }
 
-
 senCommune2@data$COD_ENTITE[which(!(senCommune2@data$diff < 50 & senCommune2@data$diff > -50))]
-
 
 senComPop2 <- rasterize(senCommune2, r, 'density')
 senComPop2 <- rasterize(senCommune2.subset, r, 'density')
@@ -368,10 +228,8 @@ grid_senComPop2 <- grid_senComPop2[nrow(grid_senComPop2):1,]
 grid_senComPop2[which(is.na(grid_senComPop2))] <- 0
 grid_senComPop2[which(is.na(grid_senComPop))] <- NA
 
-
 meltedgrid <- melt(grid_senComPop2)
 ggplot(meltedgrid, aes(x = Var2, y = Var1, fill = value)) + geom_tile() + theme(legend.position="none",axis.title.y=element_blank(),axis.title.x=element_blank(),panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.background = element_blank(),axis.text.x = element_text(angle = 90, hjust = 1))+scale_fill_gradient2(low="orange",mid="white",high="steelblue4")
-
 
 vor_data$dens3 <- avg_voronoi_ref_NA(grid_senComPop2,ref2)[[2]]
 
@@ -407,13 +265,6 @@ avg_voronoi_ref_NA <- function(grid,ref){
 
 meltedgrid <- melt(result)
 
-sum(meanr*countr)/4
-
-sum(countr)
-
-mean(meanr)
-
-
 plot(1:1298,vor_data$dens)
 points(1:1298,vor_data$dens2,pch=2)
 points(1:1298,vor_data$dens3,pch=3)
@@ -432,75 +283,10 @@ cor(log(vor_data$dens[subset]),log(vor_data$night[subset]))^2
 cor(log(vor_data$dens3[subset]),log(vor_data$night[subset]))^2
 
 
-sum(vor_data$dens3*vor_data$cells)
-sum(vor_data$dens*vor_data$cells)
-
-
-library(igraph)
-library(ggplot2)
-library(scales)
-library(reshape2)
-library(stats)
-library(tseries)
-library(moments)
-library(rgdal)
-
-source("C:/Users/Hadrien/Desktop/PersonalToolbox.R")
-
-palette <- c("steelblue4","slateblue3","palevioletred3","lightcoral","orange","chartreuse2","aquamarine4","turquoise3","royalblue1")
-palettespe <- c("tomato4","tomato3","tomato1",
-                "khaki1","khaki2","khaki3",
-                "palegreen3","palegreen4","seagreen4",
-                "slateblue1","slateblue3","slateblue4")
-palettespe2 <- c("tomato4","tomato3","tomato2","tomato1",
-                 "khaki2","khaki3","palegreen3","palegreen4",
-                 "slateblue1","slateblue2","slateblue3","slateblue4")
-
-folderin <- "/Users/TRCQ7387/Desktop/Data/"
-folderout <- "/Users/TRCQ7387/Desktop/Results/"
-
-i=1
-towerloc <- read.csv("tower.csv")
-towerloc <- towerloc[order(towerloc$tId),]
-row.names(towerloc) <- 1:1666
-D_jan <- read.csv(paste(folderin,"SET1/SET1S_",i,".csv",sep=""),header = F)
-
-country <- c(1,10,1,10,10,10)
-X <- rep(1:10,10)
-Y <- floor((0:99)/10)+1
-Z <- rep(1,100)
-
-griddingNation(X,Y,Z,country,holes=NULL,fun="mean")
-
-
-compl <- read.csv("SI-dataset_one.csv")
-vorData$densOld <- vorData$dens
-vorData$dens <- compl$dens
-
-vorData <- towerloc
-vorData <- vorData[which(vorData$tvId>0),]
-vorData <- data.frame(Id=vorData$tvId,long=vorData$tLong,lat=vorData$tLat,dens=vorData$dens,nightlight=vorData$night,
-                      Ntexts=vorData$texts,Ncalls=vorData$calls,length=vorData$length)
-vorData <- aggregate(vorData, by=list(vorData$Id), mean)
-vorData <- vorData[,-1]
-write.table(vorData,"SI-Data1.csv")
-
-
-dataV2 <- dataV
-
-dataV2 <- dataV2[which(dataV2$vorId>0),]
-dataV2 <- dataV2[order(dataV2$V1),]
-row.names(dataV2) <- 1:12344151
-dataV2 <- dataV2[1:1021052,]
-
-tsData <- data.frame(Id=dataV2$vorId,date=dataV2$V1,Ncalls=dataV2$V4)
-write.table(tsData,"SI-Data2.csv")
-
-
-
 #################################
 ##### Building the networks #####
 #################################
+
 
 #
 # Outputs:
@@ -523,8 +309,6 @@ Y <- towerloc$tLat
 lay2 <- matrix(0,ncol=2,nrow=1666)
 lay2[,1] <- X
 lay2[,2] <- Y
-
-
 
 # Full network
 jan <- matrix(0,nrow=1666,ncol=1666)
@@ -915,25 +699,3 @@ for(i in 1:8){
 cor(towerloc$tTexts[which(!is.na(towerloc$dens))],towerloc$texts[which(!is.na(towerloc$dens))])^2
 
 plot(1:8,corVec)
-
-
-#####################
-##### Functions #####
-#####################
-
-
-radian.rescale <- function(x, start=0, direction=1) {
-  c.rotate <- function(x) (x + start) %% (2 * pi) * direction
-  c.rotate(scales::rescale(x, c(0, 2 * pi), range(x)))
-}
-
-
-
-finger <- function(adj,hyp,opp){
-  mean(asin(opp/hyp),acos(adj/hyp),atan(opp/adj))*180/pi
-}
-
-1-finger(2.9,3.2,1.3)/finger(2.9,3.6,2.1)
-
-finger(3.6,4.85,3.3)
-finger(3.9,4.7,2.6)
