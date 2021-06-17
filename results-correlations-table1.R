@@ -32,6 +32,8 @@ plot(h$mids,h$counts,type='h',xlab="x",ylab="Counts",cex.lab=1.3,cex.axis=1.3)
 ############################################################
 
 
+# replace dens by dens2 for actual population density instead of population count
+
 res_cor_energy <- data.frame(type=c("All","Cities","Villages"),
                              dens=c(rsq(night,dens),rsq(night,dens,subsetC),rsq(night,dens,subsetV)),
                              texts=c(rsq(night,texts),rsq(night,texts,subsetC),rsq(night,texts,subsetV)),
